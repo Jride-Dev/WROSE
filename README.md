@@ -2,14 +2,10 @@
 
 WROSE is a local-first operational signal engine for Reddit subreddit analysis. It ingests public Reddit posts and comments, computes aggregate operational signals, and provides a replayable timeline of community activity patterns.
 
-## Phase 1 Goal
+## Phase Status
 
-Build the first working local prototype:
-- FastAPI backend
-- SQLite database
-- Reddit ingestion scaffold (mock without credentials)
-- Basic operational signal scoring
-- React/Vite dashboard shell
+- **Phase 1A — Core Engine (Complete)**: FastAPI backend, SQLite database, Reddit ingestion scaffold, six operational signals, React/Vite dashboard
+- **Phase 1B — Devvit Readiness Layer (Complete)**: API contracts for future WROSE Sentinel Devvit app, safety boundaries, backend readiness routes
 
 ## Setup
 
@@ -56,6 +52,10 @@ The backend works with mock data even without Reddit credentials.
 3. Open http://localhost:5173
 4. Enter a subreddit name and click "Ingest"
 
+## Future: WROSE Sentinel
+
+WROSE Sentinel will be a Reddit-native moderator intelligence assistant (Devvit app) that helps moderators understand chaotic conversations through replay, signal analysis, and anomaly surfacing. All actions are analytical only — no automated moderation.
+
 ## Project Structure
 
 ```
@@ -63,12 +63,15 @@ F:\WROSE
   apps/
     api/          # FastAPI backend
     frontend/     # React/Vite dashboard
+    devvit/       # Future WROSE Sentinel Devvit app (reserved)
   sql/
     wrose.db      # SQLite database (created at runtime)
     migrations/
   docs/
     PHASE_1.md
+    PHASE_1_SPLIT.md
     SIGNAL_DEFINITIONS.md
+    DEVVIT_INTEGRATION_PLAN.md
     ETHICS_AND_BOUNDARIES.md
   .env.example
   .gitignore
