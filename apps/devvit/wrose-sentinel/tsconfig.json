@@ -1,0 +1,10 @@
+{
+  "extends": "@devvit/tsconfig/base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "types": [],
+    "verbatimModuleSyntax": false
+  },
+  "include": ["src"]
+}
