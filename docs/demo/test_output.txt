@@ -1,0 +1,44 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.14.5, pytest-9.0.3, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: F:\WROSE\apps\api
+plugins: anyio-4.12.1
+collecting ... collected 9 items
+
+tests/test_devvit.py::test_capabilities PASSED                           [ 11%]
+tests/test_devvit.py::test_analyze_thread_no_data PASSED                 [ 22%]
+tests/test_devvit.py::test_analyze_thread_with_data PASSED               [ 33%]
+tests/test_devvit.py::test_replay_thread_no_data PASSED                  [ 44%]
+tests/test_devvit.py::test_replay_thread_with_data PASSED                [ 55%]
+tests/test_devvit.py::test_thread_heatmap_no_data PASSED                 [ 66%]
+tests/test_devvit.py::test_thread_heatmap_with_data PASSED               [ 77%]
+tests/test_devvit.py::test_volatility_check_no_data PASSED               [ 88%]
+tests/test_devvit.py::test_volatility_check_with_data PASSED             [100%]
+
+============================== warnings summary ===============================
+app\main.py:24
+  F:\WROSE\apps\api\app\main.py:24: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+C:\Users\imane\AppData\Roaming\Python\Python314\site-packages\fastapi\applications.py:4598
+  C:\Users\imane\AppData\Roaming\Python\Python314\site-packages\fastapi\applications.py:4598: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)  # ty: ignore[deprecated]
+
+tests/test_devvit.py::test_analyze_thread_with_data
+tests/test_devvit.py::test_thread_heatmap_with_data
+tests/test_devvit.py::test_volatility_check_with_data
+  F:\WROSE\apps\api\app\signal_engine.py:30: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    cutoff = datetime.datetime.utcnow() - datetime.timedelta(hours=window_hours)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 9 passed, 5 warnings in 0.73s ========================

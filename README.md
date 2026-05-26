@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # WROSE — Working Reddit Operational Signal Engine
 
 WROSE is a local-first operational signal engine for Reddit subreddit analysis. It ingests public Reddit posts and comments, computes aggregate operational signals, and provides a replayable timeline of community activity patterns.
@@ -77,3 +78,7 @@ F:\WROSE
   .gitignore
   README.md
 ```
+=======
+# WROSE
+Working Reddit Operational Signal Engine
+>>>>>>> f3c53ef846b3dacbcf082ea6fa18e89552263ce8
