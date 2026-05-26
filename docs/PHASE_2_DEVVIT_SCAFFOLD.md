@@ -413,3 +413,20 @@ The Devvit app depends on:
 | Permission denied on upload | Low | Ensure Devvit account has developer access |
 | Action fails on large threads | Medium | Devvit fetch timeout; add 10s timeout in api.ts |
 | Reddit API changes break Devvit | Low | Pin Devvit SDK version in package.json |
+
+---
+
+## Devvit SDK Correction
+
+During scaffold validation, `@devvit/apps` was found to be unavailable as a public npm dependency.
+
+WROSE Sentinel now uses:
+
+- `@devvit/public-api`
+
+Validation:
+- `npm install` succeeds
+- `npx tsc --noEmit` passes with zero errors
+
+Note:
+Current Reddit documentation emphasizes `devvit.json` for app configuration. If the working scaffold uses `devvit.yaml`, confirm CLI compatibility before upload/publish and migrate to `devvit.json` if required by the installed Devvit version.
