@@ -6,3 +6,5 @@ dist/
 *.db
 node_modules/
 .vite/
+*.log
+Obsidian_Vault/
