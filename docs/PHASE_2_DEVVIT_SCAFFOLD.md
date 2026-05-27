@@ -416,6 +416,39 @@ The Devvit app depends on:
 
 ---
 
+## Phase 2A — Devvit Scaffold Hardening
+
+| Item | Status |
+|---|---|
+| Devvit upload | Succeeded |
+| Playtest subreddit | `r/wrose_sentinel_dev` created |
+| App page | `https://developers.reddit.com/apps/wrose-sentinel` |
+| App README | Added |
+| `npm install` | Succeeds |
+| `npx tsc --noEmit` | Passes with zero errors |
+| `npm audit` | 6 vulnerabilities (5 high, 1 critical) through `@devvit/public-api` → `@devvit/protos` → `protobufjs` |
+| Force-fix decision | Do **not** run `npm audit fix --force` — transitive through Devvit SDK; forced changes may break compatibility |
+| Safety validation script | `scripts/check-safety.mjs` added |
+| Security notes | `docs/DEVVIT_SECURITY_NOTES.md` created |
+| Validation report | `docs/devvit_validation.md` created |
+
+### Safety Validation Requirements Before Further Feature Work
+
+1. `npm install` must succeed
+2. `npx tsc --noEmit` must pass with zero errors on source files
+3. `npm run check:safety` must pass (no destructive API patterns in implementation)
+4. `npm audit` status must be reviewed and documented
+5. No `remove`, `lock`, `ban`, `mute`, `report`, `approve`, `distinguish`, or `delete` API calls in implementation code
+6. Every analysis response path must preserve `automated_action_taken: false`
+
+### Known Blockers for Phase 3+
+
+- `npm audit` reports 6 vulnerabilities (5 high, 1 critical) through `@devvit/public-api` → `@devvit/protos` → `protobufjs`
+- No fix available upstream. Not actionable until Devvit SDK publishes a patch.
+- WROSE Sentinel must not be published publicly while critical vulnerabilities are unresolved unless Reddit documents them as non-exploitable in the Devvit runtime.
+
+---
+
 ## Devvit SDK Correction
 
 During scaffold validation, `@devvit/apps` was found to be unavailable as a public npm dependency.

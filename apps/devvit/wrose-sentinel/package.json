@@ -4,6 +4,8 @@
   "private": true,
   "description": "WROSE Sentinel — Reddit moderator intelligence assistant",
   "scripts": {
+    "typecheck": "tsc --noEmit",
+    "check:safety": "node scripts/check-safety.mjs",
     "devvit:upload": "devvit upload",
     "devvit:install": "devvit install",
     "devvit:logs": "devvit logs"

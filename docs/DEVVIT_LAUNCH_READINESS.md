@@ -23,3 +23,7 @@ WROSE Sentinel cannot launch publicly unless every moderator-facing response pre
 `automated_action_taken: false`
 
 No remove, lock, ban, mute, report, or content modification.
+
+## Security Vulnerability Gate
+
+WROSE Sentinel cannot be submitted for public review or public listing while unresolved critical SDK-level vulnerabilities remain unless Reddit documents them as non-exploitable in the Devvit runtime context.
