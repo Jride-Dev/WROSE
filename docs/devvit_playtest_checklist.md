@@ -118,6 +118,21 @@ After playtest:
 
 See `docs/TUNNEL_PLAYTEST_SETUP.md` for detailed tunnel setup steps.
 
+## Pre-Playtest Readiness
+
+Run these checks before starting the playtest session:
+
+- [ ] Backend reachable locally: `curl http://127.0.0.1:8000/health` returns OK
+- [ ] Tunnel documented and set up per `docs/TUNNEL_PLAYTEST_SETUP.md`
+- [ ] `WROSE_API_BASE_URL` documented in `.env.example` with tunnel notes
+- [ ] Safety scanner passing: `npm run check:safety` returns PASSED
+- [ ] Typecheck passing: `npm run typecheck` returns zero errors
+- [ ] No destructive API calls in source (confirmed by safety scanner)
+- [ ] No `npx devvit publish` or `npx devvit publish --public` used
+- [ ] No public listing requested
+- [ ] Manual playtest plan reviewed: `docs/PHASE_2D_MANUAL_PLAYTEST.md`
+- [ ] Test results template ready: `docs/PLAYTEST_RESULTS_TEMPLATE.md`
+
 ## Do Not Do
 
 - Do not run `npx devvit publish`

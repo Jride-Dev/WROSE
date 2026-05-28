@@ -10,6 +10,19 @@ It provides analytical moderator tools for understanding thread activity, volati
 - App version: 0.0.3
 - Playtest: Not yet performed
 - Public publish: Not ready
+- Phase 2D manual playtest plan: `docs/PHASE_2D_MANUAL_PLAYTEST.md`
+
+## Manual Playtest Not Yet Run
+
+The first live Devvit playtest has not been performed yet.
+
+When ready, follow the procedure in `docs/PHASE_2D_MANUAL_PLAYTEST.md`.
+
+Playtest rules:
+- Playtest only in `r/wrose_sentinel_dev`
+- Do not run `npx devvit publish`
+- Do not run `npx devvit publish --public`
+- Do not run `npm audit fix --force`
 
 ## Current Actions
 
