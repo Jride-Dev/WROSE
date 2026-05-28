@@ -4,9 +4,12 @@ WROSE Sentinel is a Reddit-native moderator intelligence assistant for the WROSE
 
 It provides analytical moderator tools for understanding thread activity, volatility, and operational signals.
 
-## Current Phase
+## Current Status
 
-Phase 2 scaffold/playtest.
+- Phase: 2 scaffold/playtest
+- App version: 0.0.3
+- Playtest: Not yet performed
+- Public publish: Not ready
 
 ## Current Actions
 
@@ -40,6 +43,19 @@ npx devvit upload
 npm run check:safety
 npm audit
 ```
+
+## Validation Status
+
+| Check | Result |
+|---|---|
+| `npm install` | Passes (36 packages) |
+| `npm run typecheck` | Passes (zero errors) |
+| `npm run check:safety` | Passes (8 files, 0 violations) |
+| `npx devvit upload` | Succeeds (version 0.0.3) |
+
+## Playtest Checklist
+
+See `docs/devvit_playtest_checklist.md` for the full manual playtest procedure.
 
 ## Audit Warning
 
