@@ -6,6 +6,14 @@ WROSE Sentinel runs on Reddit's Devvit runtime (Reddit's servers) but calls a se
 
 The default `wroseApiBaseUrl` setting is `http://127.0.0.1:8000`, which only works from the local machine.
 
+## Localhost Limitation
+
+`127.0.0.1` (localhost) always refers to the machine making the request.
+
+- When you click a Devvit menu item in your browser, the Devvit runtime runs on Reddit's servers
+- From Reddit's servers, `127.0.0.1:8000` points to Reddit's own localhost, not yours
+- Therefore the Devvit app cannot reach your local backend without a tunnel
+
 ## Options
 
 ### Option 1: Local Backend Only (Current)
@@ -13,21 +21,24 @@ The default `wroseApiBaseUrl` setting is `http://127.0.0.1:8000`, which only wor
 | Aspect | Detail |
 |---|---|
 | Setup | Run backend on `127.0.0.1:8000` |
-| Reachable from Devvit | No — Devvit runs on Reddit's servers |
+| Reachable from Devvit | No |
 | Reachable from browser | Yes — when testing via local Reddit session |
 | Best for | Backend development, signal engine testing, CORS validation |
 | Limitation | Cannot test actual Devvit-to-backend HTTP calls |
 
-### Option 2: Temporary Tunnel (ngrok, etc.)
+### Option 2: Temporary Tunnel (ngrok / Cloudflare Tunnel) — Recommended for Playtest
 
 | Aspect | Detail |
 |---|---|
-| Setup | `ngrok http 8000` → generates public URL |
+| Setup | Run tunnel from localhost to public HTTPS URL |
 | Reachable from Devvit | Yes |
+| Reachable from browser | Yes |
 | Security | Tunnel exposes local server to the internet |
 | Best for | Manual playtest, Devvit fetch validation |
 | Risk | Anyone with the tunnel URL can reach the backend |
-| Mitigation | Use authenticated tunnel, limit lifetime, monitor access |
+| Mitigation | Use short-lived tunnel, monitor access, restrict routes |
+
+See `docs/TUNNEL_PLAYTEST_SETUP.md` for detailed setup instructions.
 
 ### Option 3: Temporary Deployed Backend
 
@@ -54,8 +65,21 @@ The default `wroseApiBaseUrl` setting is `http://127.0.0.1:8000`, which only wor
 ## Recommended Path for Playtest
 
 1. Start with **Option 1** (local) for local browser testing of the backend
-2. Use **Option 2** (ngrok tunnel) for the actual Devvit playtest
+2. Use **Option 2** (ngrok or Cloudflare Tunnel) for the actual Devvit playtest
 3. Re-evaluate for public launch
+
+## Expected Backend URL Format
+
+The `wroseApiBaseUrl` setting expects a URL pointing to the backend root. Examples:
+
+```
+http://127.0.0.1:8000                  # local only — Devvit cannot reach
+https://abc123.ngrok.io                # ngrok tunnel — Devvit can reach
+https://wrose-tunnel.example.com       # Cloudflare Tunnel — Devvit can reach
+https://wrose-api.fly.dev              # deployed backend — Devvit can reach
+```
+
+The URL must not include a trailing path like `/api/v1`. The Devvit app appends route paths (e.g., `/devvit/capabilities`).
 
 ## Risk Notes
 
@@ -64,6 +88,23 @@ The default `wroseApiBaseUrl` setting is `http://127.0.0.1:8000`, which only wor
 - The WROSE backend CORS is set to `allow_origins=["*"]` — any website can make requests
 - The Devvit readiness routes expect unstructured input — validate on the backend before any production exposure
 - A public endpoint with no auth can be abused for data scraping or unauthorized analysis
+
+### Safety Controls for Tunnel Use
+
+- Use a short-lived tunnel session — do not leave it running indefinitely
+- Use unique, non-guessable tunnel URLs (ngrok generates random subdomains by default)
+- Do not share the tunnel URL publicly
+- Monitor tunnel access logs during playtest
+- Restart the backend after tunnel testing to clear any in-memory state
+
+### Shutdown Procedure
+
+After playtest:
+
+1. Stop the tunnel process (Ctrl+C)
+2. If using ngrok with a fixed subdomain, consider removing it
+3. Keep the backend running only if needed for local development
+4. Update the Devvit app settings back to `http://127.0.0.1:8000` or remove the tunnel URL
 
 ### No Secrets in Frontend or Devvit Source
 
@@ -82,4 +123,4 @@ The default `wroseApiBaseUrl` setting is `http://127.0.0.1:8000`, which only wor
 
 During Phase 2, the backend remains local-only (`127.0.0.1:8000`).
 
-A tunnel or deployed backend will be set up when manual playtest is ready to proceed.
+A tunnel will be set up when manual playtest is ready to proceed. See `docs/TUNNEL_PLAYTEST_SETUP.md` for setup steps.

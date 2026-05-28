@@ -97,6 +97,27 @@ npm audit          # review vulnerabilities (do not force-fix)
 npx devvit upload  # re-upload after changes
 ```
 
+## Backend Exposure Validation
+
+Before playtest, validate that the backend is reachable through the tunnel:
+
+- [ ] Backend running locally: `curl http://127.0.0.1:8000/health` returns OK
+- [ ] Tunnel active: tunnel process is running in a terminal
+- [ ] Tunnel health: `curl <tunnel-url>/health` returns OK
+- [ ] Tunnel capabilities: `curl <tunnel-url>/devvit/capabilities` returns valid JSON
+- [ ] Devvit settings: `wroseApiBaseUrl` is set to the tunnel HTTPS URL (not `127.0.0.1`)
+- [ ] Tunnel URL uses `https://`
+- [ ] Tunnel URL has no trailing slash
+- [ ] `automated_action_taken: false` is present in tunnel capabilities response
+
+After playtest:
+
+- [ ] Tunnel stopped: Ctrl+C in tunnel terminal
+- [ ] Devvit `wroseApiBaseUrl` reset to `http://127.0.0.1:8000`
+- [ ] No unexpected traffic observed in tunnel logs
+
+See `docs/TUNNEL_PLAYTEST_SETUP.md` for detailed tunnel setup steps.
+
 ## Do Not Do
 
 - Do not run `npx devvit publish`
