@@ -117,4 +117,12 @@
 - Demo Mode activated automatically because `wroseApiBaseUrl` defaulted to `http://127.0.0.1:8000` (localhost)
 - No tunnel setup was required
 - App has since been updated to v0.0.8 with the same Demo Mode logic hardened in `src/utils/demo.ts`
-- Next: backend-connected playtest via tunnel, or next feature phase
+- Known cosmetic issue: Post ID displayed as `t3_t3_...` (duplicated prefix)
+
+### Known Issue Resolved in Phase 2F
+
+| Issue | Description | Resolution |
+|---|---|---|
+| Duplicated `t3_` prefix | Post ID displayed as `t3_t3_1tq01s5` because `context.postId` already includes `t3_` and demo.ts was prepending another `t3_` | Added `normalizeThingId()` in `src/utils/id.ts` — strips existing prefix before adding the expected one. Both demo forms and live forms now use it. |
+
+Next: backend-connected playtest via tunnel, or next feature phase.

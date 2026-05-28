@@ -6,12 +6,22 @@ It provides analytical moderator tools for understanding thread activity, volati
 
 ## Current Status
 
-- Phase: 2E — First manual playtest complete
-- App version: 0.0.8
+- Phase: 2F — Demo Mode polish and ID cleanup
+- Current scaffold version: 0.0.8
+- Playtest validated version: v0.0.5.1 (Demo Mode)
 - Demo Mode playtest: **Passed** (2026-05-28)
 - Backend-connected mode: Not tested
 - Public publish: Not ready
 - Playtest results: `docs/PLAYTEST_RESULTS_TEMPLATE.md`
+
+## Phase 2F — Demo Mode Polish
+
+- Fixed duplicated `t3_` prefix in Post ID display (`t3_t3_...` → `t3_...`)
+- Added `normalizeThingId()` helper in `src/utils/id.ts`
+- Analyze Thread Demo response now includes `Backend connected: false`
+- Volatility Check Demo response now includes `Backend connected: false` and cleaner layout
+- Capabilities/info action now has its own Demo Mode fallback (was previously only error on backend unreachable)
+- Demo Capabilities clearly lists: what works in Demo Mode, what requires backend, safety boundaries
 
 ## Playtest Rules
 - Playtest only in `r/wrose_sentinel_dev`
@@ -79,6 +89,8 @@ npm audit
 | `npx devvit upload` | Succeeds (version 0.0.8) |
 | Demo Mode fallback | Active |
 | Demo Mode playtest | Passed (2026-05-28) |
+| ID normalization (`normalizeThingId`) | Added — resolves `t3_t3_` duplication |
+| Capabilities Demo Mode | Added — no longer dead-ends on backend unreachable |
 
 ## Playtest Checklist
 
