@@ -1,10 +1,27 @@
-import { Devvit } from "@devvit/public-api";
+import { Devvit, SettingScope } from "@devvit/public-api";
 import { handleAnalyzeThread } from "./actions/analyzeThread.js";
 import { handleVolatilityCheck } from "./actions/volatilityCheck.js";
 import { showCapabilities } from "./actions/capabilities.js";
 import { showErrorForm } from "./components/ErrorBlock.js";
 
 Devvit.configure({ redditAPI: true });
+
+Devvit.addSettings([
+  {
+    name: "wroseApiBaseUrl",
+    label: "WROSE API Base URL",
+    type: "string",
+    defaultValue: "http://127.0.0.1:8000",
+    scope: SettingScope.Installation,
+  },
+  {
+    name: "wroseSafetyStatement",
+    label: "Safety Notice (read-only)",
+    type: "string",
+    defaultValue: "No automated action was taken. WROSE Sentinel is analytical only.",
+    scope: SettingScope.Installation,
+  },
+]);
 
 Devvit.addMenuItem({
   label: "WROSE: Analyze Thread",
