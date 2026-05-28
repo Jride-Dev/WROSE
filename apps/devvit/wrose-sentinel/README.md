@@ -6,19 +6,14 @@ It provides analytical moderator tools for understanding thread activity, volati
 
 ## Current Status
 
-- Phase: 2 scaffold/playtest
-- App version: 0.0.3
-- Playtest: Not yet performed
+- Phase: 2E — First manual playtest complete
+- App version: 0.0.8
+- Demo Mode playtest: **Passed** (2026-05-28)
+- Backend-connected mode: Not tested
 - Public publish: Not ready
-- Phase 2D manual playtest plan: `docs/PHASE_2D_MANUAL_PLAYTEST.md`
+- Playtest results: `docs/PLAYTEST_RESULTS_TEMPLATE.md`
 
-## Manual Playtest Not Yet Run
-
-The first live Devvit playtest has not been performed yet.
-
-When ready, follow the procedure in `docs/PHASE_2D_MANUAL_PLAYTEST.md`.
-
-Playtest rules:
+## Playtest Rules
 - Playtest only in `r/wrose_sentinel_dev`
 - Do not run `npx devvit publish`
 - Do not run `npx devvit publish --public`
@@ -81,8 +76,9 @@ npm audit
 | `npm install` | Passes (36 packages) |
 | `npm run typecheck` | Passes (zero errors) |
 | `npm run check:safety` | Passes (9 files, 0 violations) |
-| `npx devvit upload` | Succeeds (version 0.0.6) |
-| Demo Mode fallback | Active
+| `npx devvit upload` | Succeeds (version 0.0.8) |
+| Demo Mode fallback | Active |
+| Demo Mode playtest | Passed (2026-05-28) |
 
 ## Playtest Checklist
 

@@ -1,10 +1,19 @@
 # Phase 2D: Manual Playtest Plan
 
+## Playtest Result — Phase 2E
+
+**Demo Mode playtest: Passed** (2026-05-28)
+
+- App version: 0.0.5.1
+- All 3 menu items visible and responsive on `r/wrose_sentinel_dev`
+- Analyze Thread and Volatility Check return Demo Mode responses with `automated_action_taken: false`
+- About / Capabilities returns capabilities with `automated_action_taken: false`
+- Backend-connected mode: not tested
+- Full results: `docs/PLAYTEST_RESULTS_TEMPLATE.md`
+
 ## Purpose
 
 Verify that WROSE Sentinel's Devvit menu actions appear correctly in the moderator UI and return expected analytical results from the backend.
-
-This is a dry-run procedure. The playtest has not been run yet.
 
 ## Prerequisites
 
