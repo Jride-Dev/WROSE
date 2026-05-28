@@ -2,6 +2,7 @@ import { Devvit } from "@devvit/public-api";
 import { analyzeThread } from "../utils/api.js";
 import { SAFETY_STATEMENT, checkAutomationFlag } from "../utils/safety.js";
 import { isLocalhostUrl, showDemoAnalyzeForm } from "../utils/demo.js";
+import { normalizeThingId } from "../utils/id.js";
 
 export async function handleAnalyzeThread(
   context: Devvit.Context,
@@ -13,23 +14,11 @@ export async function handleAnalyzeThread(
   const postId = context.postId || "";
 
   if (!subreddit || !postId) {
-    const errorForm = Devvit.createForm(
-      {
-        fields: [
-          {
-            name: "error",
-            label: "Missing Data",
-            type: "paragraph",
-            defaultValue:
-              "Could not determine the subreddit or post.\n\nPlease open this menu from a specific post.",
-          },
-        ],
-        title: "WROSE: Analyze Thread",
-        acceptLabel: "OK",
-      },
-      () => {},
+    showForm(
+      context,
+      "WROSE: Analyze Thread",
+      "Could not determine the subreddit or post.\n\nPlease open this menu from a specific post in your subreddit.",
     );
-    context.ui.showForm(errorForm);
     return;
   }
 
@@ -43,24 +32,13 @@ export async function handleAnalyzeThread(
     checkAutomationFlag(data);
 
     if (data.status === "no_data") {
-      const noDataForm = Devvit.createForm(
-        {
-          fields: [
-            {
-              name: "notice",
-              label: "No Data",
-              type: "paragraph",
-              defaultValue:
-                `No stored data found for r/${subreddit}.\n\n` +
-                `Ingest this subreddit first via the WROSE dashboard, then try again.`,
-            },
-          ],
-          title: "WROSE: No Data Available",
-          acceptLabel: "OK",
-        },
-        () => {},
+      showForm(
+        context,
+        "WROSE: Analyze Thread",
+        `No stored data found for r/${subreddit}.\n\n` +
+        `Ingest this subreddit first via the WROSE dashboard, then try again.\n\n` +
+        `${SAFETY_STATEMENT}`,
       );
-      context.ui.showForm(noDataForm);
       return;
     }
 
@@ -68,21 +46,28 @@ export async function handleAnalyzeThread(
     const rec = data.recommended_moderator_view || "No recommendation available.";
 
     const lines: string[] = [
-      `# Thread Analysis — r/${subreddit}`,
+      `# WROSE Analyze Thread`,
       ``,
-      `## Signals`,
-      `Activity Velocity:    ${sig.activity_velocity ?? "N/A"}`,
-      `Sentiment Drift:      ${sig.sentiment_drift ?? "N/A"}`,
-      `Keyword Acceleration: ${sig.keyword_acceleration ?? "N/A"}`,
-      `Hostility Score:      ${sig.hostility_score ?? "N/A"}`,
-      `Controversy Density:  ${sig.controversy_density ?? "N/A"}`,
-      `Anomaly Score:        ${sig.anomaly_score ?? "N/A"}`,
+      `Status: ok`,
+      `Automated action taken: false`,
       ``,
-      `## Recommended View`,
-      rec,
+      `Context:`,
+      `- Subreddit: r/${subreddit}`,
+      `- Post ID: ${normalizeThingId(postId)}`,
       ``,
-      `---`,
-      SAFETY_STATEMENT,
+      `Signals:`,
+      `- Activity Velocity:    ${sig.activity_velocity ?? "N/A"}`,
+      `- Sentiment Drift:      ${sig.sentiment_drift ?? "N/A"}`,
+      `- Keyword Acceleration: ${sig.keyword_acceleration ?? "N/A"}`,
+      `- Hostility Score:      ${sig.hostility_score ?? "N/A"}`,
+      `- Controversy Density:  ${sig.controversy_density ?? "N/A"}`,
+      `- Anomaly Score:        ${sig.anomaly_score ?? "N/A"}`,
+      ``,
+      `Recommended Moderator View: ${rec}`,
+      ``,
+      `Safety:`,
+      `- ${SAFETY_STATEMENT}`,
+      `- WROSE Sentinel did not modify Reddit content.`,
     ];
 
     const resultsForm = Devvit.createForm(
@@ -106,7 +91,30 @@ export async function handleAnalyzeThread(
       context,
       subreddit,
       postId,
-      "WROSE API Base URL is configured but the backend did not respond. Falling back to Demo Mode.",
+      "WROSE API Base URL is configured but the backend did not respond.",
     );
   }
+}
+
+function showForm(
+  context: Devvit.Context,
+  title: string,
+  message: string,
+): void {
+  const form = Devvit.createForm(
+    {
+      fields: [
+        {
+          name: "error",
+          label: "Notice",
+          type: "paragraph",
+          defaultValue: message,
+        },
+      ],
+      title,
+      acceptLabel: "OK",
+    },
+    () => {},
+  );
+  context.ui.showForm(form);
 }

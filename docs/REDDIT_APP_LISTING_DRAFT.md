@@ -6,7 +6,7 @@ WROSE Sentinel
 
 ## Short Description
 
-Moderator intelligence assistant for analyzing thread activity, volatility signals, and operational patterns. Analytical only — no automated moderation actions.
+WROSE Sentinel helps moderators review thread volatility, activity spikes, and signal context without taking moderation action. Built for explainable community awareness.
 
 ## Longer Overview
 
@@ -22,8 +22,12 @@ WROSE Sentinel is analytical only. It does not remove, lock, ban, mute, report, 
 **How It Works**
 WROSE Sentinel calls a self-hosted WROSE backend API that ingests subreddit data and computes operational signals. The backend must be running and the subreddit must be ingested before analysis is available.
 
-**Current Status**
-Phase 2 — private playtest. Not yet ready for public listing.
+**Demo Mode**
+WROSE Sentinel includes a Demo Mode that works without a backend connection. In Demo Mode, the app returns safe placeholder responses to confirm menu actions and form display are working. No live signal data is shown, but moderators can verify the app is installed and responsive.
+
+## Short Description (under 200 chars)
+
+WROSE Sentinel helps moderators review thread volatility, activity spikes, and signal context without taking moderation action. Built for explainable community awareness.
 
 ## Terms URL
 
@@ -41,16 +45,24 @@ false
 
 Moderation / Tooling
 
-## Launch Status
+## Current Version
 
-Unlisted / private testing only
+0.0.10
 
-## Public Listing
+## Current Status
 
-Not ready.
+Private / playtest only
 
-Blockers:
-- Manual subreddit playtest not yet performed
-- SDK-level vulnerability in `@devvit/public-api` → `@devvit/protos` → `protobufjs` (6 vulnerabilities, 1 critical, no fix available)
-- Backend exposure plan not finalized
-- Public listing review not submitted
+| Check | Status |
+|---|---|
+| Demo Mode validated | Yes |
+| Backend-connected mode validated | No |
+| Public listing readiness | Not ready |
+
+## Public Listing Blockers
+
+- Backend-connected mode not tested (requires tunnel setup)
+- SDK / protobufjs transitive audit issue remains (6 vulnerabilities, 5 high, 1 critical — no fix available)
+- Mobile / web cross-account testing not complete
+- README and listing assets not final
+- Reddit app review not submitted

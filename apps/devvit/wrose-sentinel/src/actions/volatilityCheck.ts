@@ -2,6 +2,7 @@ import { Devvit } from "@devvit/public-api";
 import { volatilityCheck } from "../utils/api.js";
 import { SAFETY_STATEMENT, checkAutomationFlag } from "../utils/safety.js";
 import { isLocalhostUrl, showDemoVolatilityForm } from "../utils/demo.js";
+import { normalizeThingId } from "../utils/id.js";
 
 export async function handleVolatilityCheck(
   context: Devvit.Context,
@@ -13,23 +14,11 @@ export async function handleVolatilityCheck(
   const postId = context.postId || "";
 
   if (!subreddit || !postId) {
-    const errorForm = Devvit.createForm(
-      {
-        fields: [
-          {
-            name: "error",
-            label: "Missing Data",
-            type: "paragraph",
-            defaultValue:
-              "Could not determine the subreddit or post.\n\nPlease open this menu from a specific post.",
-          },
-        ],
-        title: "WROSE: Volatility Check",
-        acceptLabel: "OK",
-      },
-      () => {},
+    showForm(
+      context,
+      "WROSE: Volatility Check",
+      "Could not determine the subreddit or post.\n\nPlease open this menu from a specific post in your subreddit.",
     );
-    context.ui.showForm(errorForm);
     return;
   }
 
@@ -43,24 +32,13 @@ export async function handleVolatilityCheck(
     checkAutomationFlag(data);
 
     if (data.status === "no_data") {
-      const noDataForm = Devvit.createForm(
-        {
-          fields: [
-            {
-              name: "notice",
-              label: "No Data",
-              type: "paragraph",
-              defaultValue:
-                `No stored data found for r/${subreddit}.\n\n` +
-                `Ingest this subreddit first via the WROSE dashboard, then try again.`,
-            },
-          ],
-          title: "WROSE: No Data Available",
-          acceptLabel: "OK",
-        },
-        () => {},
+      showForm(
+        context,
+        "WROSE: Volatility Check",
+        `No stored data found for r/${subreddit}.\n\n` +
+        `Ingest this subreddit first via the WROSE dashboard, then try again.\n\n` +
+        `${SAFETY_STATEMENT}`,
       );
-      context.ui.showForm(noDataForm);
       return;
     }
 
@@ -71,18 +49,25 @@ export async function handleVolatilityCheck(
     const explanation = data.explanation || "No explanation available.";
 
     const lines: string[] = [
-      `# Volatility Check — r/${subreddit}`,
+      `# WROSE Volatility Check`,
       ``,
-      `Score: ${score}`,
+      `Status: ok`,
+      `Volatility Score: ${score}`,
+      `Automated action taken: false`,
       ``,
-      `## Contributing Factors`,
+      `Context:`,
+      `- Subreddit: r/${subreddit}`,
+      `- Post ID: ${normalizeThingId(postId)}`,
+      ``,
+      `Contributing Factors:`,
       factors,
       ``,
-      `## Explanation`,
+      `Explanation:`,
       explanation,
       ``,
-      `---`,
-      SAFETY_STATEMENT,
+      `Safety:`,
+      `- ${SAFETY_STATEMENT}`,
+      `- WROSE Sentinel did not modify Reddit content.`,
     ];
 
     const resultsForm = Devvit.createForm(
@@ -106,7 +91,30 @@ export async function handleVolatilityCheck(
       context,
       subreddit,
       postId,
-      "WROSE API Base URL is configured but the backend did not respond. Falling back to Demo Mode.",
+      "WROSE API Base URL is configured but the backend did not respond.",
     );
   }
+}
+
+function showForm(
+  context: Devvit.Context,
+  title: string,
+  message: string,
+): void {
+  const form = Devvit.createForm(
+    {
+      fields: [
+        {
+          name: "error",
+          label: "Notice",
+          type: "paragraph",
+          defaultValue: message,
+        },
+      ],
+      title,
+      acceptLabel: "OK",
+    },
+    () => {},
+  );
+  context.ui.showForm(form);
 }

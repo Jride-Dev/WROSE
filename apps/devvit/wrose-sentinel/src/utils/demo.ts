@@ -1,10 +1,10 @@
 import { Devvit, Context } from "@devvit/public-api";
 import { normalizeThingId } from "./id.js";
 
-const DEMO_NOTE =
-  "WROSE Sentinel is running in Demo Mode because the backend is not connected.";
 const SAFETY_LINE =
   "No automated action was taken. WROSE Sentinel is analytical only.";
+const NO_MODIFY_LINE =
+  "WROSE Sentinel did not modify Reddit content.";
 
 export function isLocalhostUrl(url: string | undefined | null): boolean {
   if (!url) return true;
@@ -42,25 +42,28 @@ export function showDemoAnalyzeForm(
   reason?: string,
 ): void {
   const lines: string[] = [
-    `# WROSE Analyze Thread — Demo Mode`,
+    `# WROSE Analyze Thread`,
     ``,
     `Status: demo_mode`,
     `Backend connected: false`,
     `Automated action taken: false`,
     ``,
-    `Subreddit: r/${subreddit}`,
-    `Post ID: ${normalizeThingId(postId)}`,
+    `Context:`,
+    `- Subreddit: r/${subreddit}`,
+    `- Post ID: ${normalizeThingId(postId)}`,
     ``,
-    `Suggested Moderator View: review`,
+    `Result:`,
+    `- Demo Mode active — no live backend connected`,
+    `- Suggested moderator view: review`,
     ``,
-    reason ?? DEMO_NOTE,
+    `Explanation:`,
+    reason ? `- ${reason}` : `- WROSE Sentinel is running without a backend connection.`,
+    `- The menu action and form display are working correctly.`,
+    `- No live signal analysis was performed on this thread.`,
     ``,
-    `No live backend analysis was performed.`,
-    `This confirms the Devvit menu action, form display, and Reddit context`,
-    `integration pipeline is working.`,
-    ``,
-    `---`,
-    SAFETY_LINE,
+    `Safety:`,
+    `- ${SAFETY_LINE}`,
+    `- ${NO_MODIFY_LINE}`,
   ];
 
   showForm(context, "WROSE: Analyze Thread (Demo)", "Demo Analysis", lines.join("\n"));
@@ -73,27 +76,32 @@ export function showDemoVolatilityForm(
   reason?: string,
 ): void {
   const lines: string[] = [
-    `# WROSE Volatility Check — Demo Mode`,
+    `# WROSE Volatility Check`,
     ``,
     `Status: demo_mode`,
     `Volatility Score: 0.42 (placeholder)`,
     `Backend connected: false`,
     `Automated action taken: false`,
     ``,
-    `Subreddit: r/${subreddit}`,
-    `Post ID: ${normalizeThingId(postId)}`,
+    `Context:`,
+    `- Subreddit: r/${subreddit}`,
+    `- Post ID: ${normalizeThingId(postId)}`,
     ``,
-    reason ?? DEMO_NOTE,
-    ``,
-    `Contributing Factors:`,
-    `  - Devvit menu action executed successfully`,
+    `Result:`,
+    `- Demo Mode active — no live backend connected`,
+    `- Contributing factors:`,
     `  - Backend not connected`,
     `  - Live signal engine unavailable`,
+    `  - Devvit menu action executed successfully`,
     ``,
-    `This confirms the menu action pipeline is working end-to-end.`,
+    `Explanation:`,
+    reason ? `- ${reason}` : `- WROSE Sentinel is running without a backend connection.`,
+    `- The volatility check pipeline (menu action, API call, response) is confirmed working.`,
+    `- No live volatility scoring was performed.`,
     ``,
-    `---`,
-    SAFETY_LINE,
+    `Safety:`,
+    `- ${SAFETY_LINE}`,
+    `- ${NO_MODIFY_LINE}`,
   ];
 
   showForm(context, "WROSE: Volatility Check (Demo)", "Demo Volatility Check", lines.join("\n"));
@@ -101,32 +109,28 @@ export function showDemoVolatilityForm(
 
 export function showDemoCapabilitiesForm(context: Context): void {
   const lines: string[] = [
-    `# WROSE Sentinel — Capabilities (Demo Mode)`,
+    `# WROSE Sentinel — Capabilities`,
     ``,
+    `Status: demo_mode`,
     `Backend connected: false`,
     `Automated action taken: false`,
     ``,
-    `## What WROSE Sentinel Can Do (Demo Mode)`,
-    `- Display moderator menu items in post and subreddit menus`,
-    `- Open analytical result forms on menu click`,
-    `- Show thread context (subreddit, post ID)`,
-    `- Return safe placeholder analysis data`,
-    `- Run without a backend connection or tunnel`,
+    `Available in Demo Mode:`,
+    `- Analyze Thread — view thread context and placeholder signals`,
+    `- Volatility Check — view placeholder volatility score and factors`,
+    `- About / Capabilities — this screen`,
     ``,
-    `## What Requires Backend Connection`,
+    `Requires Backend Connection:`,
     `- Live signal scoring (activity velocity, sentiment drift, etc.)`,
-    `- Real volatility scoring`,
+    `- Real volatility scoring with backend data`,
     `- Subreddit ingestion and data storage`,
     `- Per-thread historical analysis`,
     ``,
-    `## Safety Boundaries`,
+    `Safety:`,
     `- No automated moderation actions are performed`,
     `- No content is removed, locked, banned, muted, reported, approved, distinguished, or deleted`,
     `- All responses include automated_action_taken: false`,
-    `- Analysis only — moderator must review and act`,
-    ``,
-    `---`,
-    SAFETY_LINE,
+    `- ${NO_MODIFY_LINE}`,
   ];
 
   showForm(context, "WROSE: About / Capabilities", "Capabilities", lines.join("\n"));

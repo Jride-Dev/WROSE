@@ -27,6 +27,7 @@ Devvit.addMenuItem({
   label: "WROSE: Analyze Thread",
   location: "post",
   forUserType: "moderator",
+  description: "Review thread activity signals and recommended moderator view. Analytical only — no moderation action taken.",
   onPress: async (_event, context) => {
     await handleAnalyzeThread(context);
   },
@@ -36,6 +37,7 @@ Devvit.addMenuItem({
   label: "WROSE: Volatility Check",
   location: "post",
   forUserType: "moderator",
+  description: "Check thread volatility score and contributing factors. Analytical only — no moderation action taken.",
   onPress: async (_event, context) => {
     await handleVolatilityCheck(context);
   },
@@ -45,6 +47,7 @@ Devvit.addMenuItem({
   label: "WROSE: About / Capabilities",
   location: "subreddit",
   forUserType: "moderator",
+  description: "Learn what WROSE Sentinel can do, view safety boundaries, and check connection status.",
   onPress: async (_event, context) => {
     try {
       await showCapabilities(context);
