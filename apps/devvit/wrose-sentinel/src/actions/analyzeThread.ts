@@ -1,11 +1,14 @@
 import { Devvit } from "@devvit/public-api";
 import { analyzeThread } from "../utils/api.js";
 import { SAFETY_STATEMENT, checkAutomationFlag } from "../utils/safety.js";
+import { isLocalhostUrl, showDemoAnalyzeForm } from "../utils/demo.js";
 
 export async function handleAnalyzeThread(
   context: Devvit.Context,
 ): Promise<void> {
-  const baseUrl = (await context.settings.get("wroseApiBaseUrl")) as string;
+  const baseUrl = (await context.settings.get("wroseApiBaseUrl")) as
+    | string
+    | undefined;
   const subreddit = context.subredditName || "";
   const postId = context.postId || "";
 
@@ -30,8 +33,13 @@ export async function handleAnalyzeThread(
     return;
   }
 
+  if (isLocalhostUrl(baseUrl)) {
+    showDemoAnalyzeForm(context, subreddit, postId);
+    return;
+  }
+
   try {
-    const data = await analyzeThread(baseUrl, subreddit, postId);
+    const data = await analyzeThread(baseUrl!, subreddit, postId);
     checkAutomationFlag(data);
 
     if (data.status === "no_data") {
@@ -94,25 +102,11 @@ export async function handleAnalyzeThread(
     );
     context.ui.showForm(resultsForm);
   } catch {
-    const errorForm = Devvit.createForm(
-      {
-        fields: [
-          {
-            name: "error",
-            label: "Connection Error",
-            type: "paragraph",
-            defaultValue:
-              "WROSE backend is not responding.\n\n" +
-              "Ensure your WROSE API server is running.\n" +
-              "To configure: open App Settings for WROSE Sentinel.\n\n" +
-              "Automated action taken: false",
-          },
-        ],
-        title: "WROSE: Backend Unreachable",
-        acceptLabel: "OK",
-      },
-      () => {},
+    showDemoAnalyzeForm(
+      context,
+      subreddit,
+      postId,
+      "WROSE API Base URL is configured but the backend did not respond. Falling back to Demo Mode.",
     );
-    context.ui.showForm(errorForm);
   }
 }

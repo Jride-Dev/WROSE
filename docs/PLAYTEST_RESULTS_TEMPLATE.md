@@ -6,7 +6,7 @@
 |---|---|
 | Date | |
 | App version | |
-| Backend URL type | local / tunnel / deployed |
+| Backend URL type | local / tunnel / deployed / demo |
 | Tunnel tool (if used) | ngrok / Cloudflare Tunnel / other |
 | Test subreddit | |
 | Tested account | |
@@ -57,6 +57,17 @@
 | Limitations listed | | |
 | Safety boundaries listed | | |
 | `automated_action_taken: false` present | | |
+
+## Demo Mode Validation
+
+| Check | Pass/Fail | Notes |
+|---|---|---|
+| Demo Mode result confirmed | Yes / No | |
+| Analyze Thread shows "WROSE Demo Mode" | | |
+| Analyze Thread shows "Backend not connected" | | |
+| Volatility Check shows score 0.42 | | |
+| Volatility Check shows "WROSE Demo Mode" | | |
+| `automated_action_taken: false` in Demo Mode response | | |
 
 ## Error Handling
 

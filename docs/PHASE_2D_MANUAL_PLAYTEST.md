@@ -24,7 +24,23 @@ This is a dry-run procedure. The playtest has not been run yet.
 | Terminal 2 | Tunnel | `ngrok http 8000` or `cloudflared tunnel --url http://127.0.0.1:8000` |
 | Terminal 3 | Devvit (optional) | `npx devvit logs r/wrose_sentinel_dev` for streaming logs |
 
-## Backend Startup
+## Demo Mode (First Playtest Path)
+
+Demo Mode allows playtesting without a backend tunnel. The app returns safe placeholder responses when the backend is not connected.
+
+When to use Demo Mode:
+- First playtest session — verify menu items render and respond
+- Backend tunnel not yet set up (ngrok requires account/authtoken)
+- Quick validation of Devvit menu action pipeline
+
+In Demo Mode, the app returns:
+- Analyze Thread: status `demo_mode`, mock signal placeholders, `automated_action_taken: false`
+- Volatility Check: status `demo_mode`, score `0.42`, `automated_action_taken: false`
+- Each response clearly states "WROSE Demo Mode" and "Backend not connected"
+
+No special configuration needed. The app defaults to Demo Mode when `wroseApiBaseUrl` is `localhost` (the default setting).
+
+## Backend Startup (Required for Live Mode)
 
 ```bash
 cd apps/api
@@ -38,7 +54,7 @@ curl http://127.0.0.1:8000/health
 # {"status":"ok","database":"ok"}
 ```
 
-## Tunnel Startup
+## Tunnel Startup (Required for Live Mode)
 
 ```bash
 # Option A: ngrok
@@ -139,18 +155,62 @@ No automated action was taken. WROSE Sentinel is analytical only.
 
 A modal form displays available actions, limitations, safety boundaries, and `automated_action_taken: false`.
 
-## Expected Backend-Unavailable Behavior
+## Expected Backend-Unavailable / Demo Mode Behavior
 
-When the backend is not running:
+When the backend is not configured or unreachable, the app returns Demo Mode responses:
+
+### Analyze Thread (Demo Mode)
 
 ```
-WROSE backend is not responding.
+# WROSE Analyze Thread — Demo Mode
 
-Ensure your WROSE API server is running.
-To configure: open App Settings for WROSE Sentinel.
+**Status:** demo_mode
+**Automated action taken:** false
 
-Automated action taken: false
+WROSE Sentinel is running in Demo Mode because the backend is not connected.
+
+## Thread Context
+Subreddit: r/wrose_sentinel_dev
+Post ID: t3_abc123
+
+## Suggested Moderator View
+review
+
+## What This Means
+This is a local scaffold response. No live backend analysis was performed.
+WROSE Sentinel responded from the Devvit app directly to confirm that
+menu actions, menu items, forms, and Reddit context integration are working.
+
+---
+No automated action was taken. WROSE Sentinel is analytical only.
 ```
+
+### Volatility Check (Demo Mode)
+
+```
+# WROSE Volatility Check — Demo Mode
+
+**Status:** demo_mode
+**Volatility Score:** 0.42 (placeholder)
+**Automated action taken:** false
+
+WROSE Sentinel is running in Demo Mode because the backend is not connected.
+
+## Contributing Factors
+- Backend not connected
+- Live signal engine unavailable
+- Devvit menu action executed successfully
+
+## Explanation
+The volatility check requires a live backend connection to score the thread.
+Since the backend is not connected, WROSE Sentinel returned a placeholder
+score to confirm the menu action pipeline is working end-to-end.
+
+---
+No automated action was taken. WROSE Sentinel is analytical only.
+```
+
+`automated_action_taken: false` must be present in every Demo Mode response.
 
 ## Expected No-Data Behavior
 
@@ -166,7 +226,16 @@ Ingest this subreddit first via the WROSE dashboard, then try again.
 
 ## Pass/Fail Checklist
 
-### Pre-Playtest
+### Pre-Playtest — Demo Mode Path (No Tunnel Needed)
+
+All checks below can be performed with `wroseApiBaseUrl` at its default (`http://127.0.0.1:8000`). Demo Mode will activate automatically.
+
+- [ ] App uploaded: `npx devvit upload` succeeds
+- [ ] App installed on `r/wrose_sentinel_dev`
+- [ ] Test post exists with comments
+- [ ] `wroseApiBaseUrl` unchanged (default `localhost`) — Demo Mode will be active
+
+### Pre-Playtest — Live Mode Path (Requires Tunnel)
 
 - [ ] Backend health OK locally: `curl http://127.0.0.1:8000/health`
 - [ ] Tunnel active and forwarding
@@ -184,11 +253,13 @@ Ingest this subreddit first via the WROSE dashboard, then try again.
 - [ ] "WROSE: Volatility Check" appears in post moderator menu
 - [ ] "WROSE: About / Capabilities" appears in subreddit moderator menu
 - [ ] Menu actions do NOT appear for non-moderator accounts
-- [ ] Analyze Thread returns signal values
+- [ ] Analyze Thread returns signal values (live) or Demo Mode response
 - [ ] Analyze Thread includes `automated_action_taken: false`
-- [ ] Volatility Check returns score and factors
+- [ ] Volatility Check returns score and factors (live) or Demo Mode response
 - [ ] Volatility Check includes `automated_action_taken: false`
-- [ ] Backend-unavailable shows error message
+- [ ] Backend-unavailable shows Demo Mode response (not dead-end error)
+- [ ] Demo Mode Analyze Thread includes "WROSE Demo Mode" and "Backend not connected"
+- [ ] Demo Mode Volatility Check includes score `0.42` and "WROSE Demo Mode"
 - [ ] No-data shows "No stored data found" message
 - [ ] No destructive API calls observed
 

@@ -43,6 +43,23 @@ Every analysis response must preserve:
 automated_action_taken: false
 ```
 
+## Demo Mode
+
+WROSE Sentinel includes a Demo Mode that works without a backend tunnel. When the WROSE API is not configured or unreachable, the app returns safe placeholder responses instead of a dead-end error.
+
+Demo Mode behavior:
+- Works without ngrok or Cloudflare Tunnel
+- Verifies Reddit menu actions, forms, and context integration
+- Does not perform live backend scoring
+- `automated_action_taken` remains `false`
+- Each response clearly states "WROSE Demo Mode" and "Backend not connected"
+
+Demo Mode triggers:
+- `wroseApiBaseUrl` is missing, empty, or set to `localhost`
+- The backend URL is configured but the fetch fails (timeout, network error)
+
+When a real backend is configured and reachable, Demo Mode is bypassed and live data is returned.
+
 ## Backend
 
 WROSE Sentinel calls the external WROSE backend Devvit readiness API (`/devvit/analyze-thread`, `/devvit/volatility-check`, `/devvit/capabilities`).
@@ -63,8 +80,9 @@ npm audit
 |---|---|
 | `npm install` | Passes (36 packages) |
 | `npm run typecheck` | Passes (zero errors) |
-| `npm run check:safety` | Passes (8 files, 0 violations) |
-| `npx devvit upload` | Succeeds (version 0.0.3) |
+| `npm run check:safety` | Passes (9 files, 0 violations) |
+| `npx devvit upload` | Succeeds (version 0.0.6) |
+| Demo Mode fallback | Active
 
 ## Playtest Checklist
 
