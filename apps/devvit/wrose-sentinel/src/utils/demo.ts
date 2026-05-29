@@ -1,40 +1,13 @@
 import { Devvit, Context } from "@devvit/public-api";
 import { normalizeThingId } from "./id.js";
+import { showResultForm } from "./forms.js";
 
-const SAFETY =
-  "No automated action was taken. WROSE Sentinel is analytical only. No Reddit content was modified.";
+const SAFETY = "WROSE Sentinel is analytical only. No Reddit content was modified.";
+const CTX = (s: string, p: string) => `r/${s} · ${normalizeThingId(p)}`;
 
 export function isLocalhostUrl(url: string | undefined | null): boolean {
   if (!url) return true;
   return /^https?:\/\/(127\.0\.0\.1|localhost)/.test(url);
-}
-
-function showForm(
-  context: Context,
-  title: string,
-  label: string,
-  content: string,
-): void {
-  const form = Devvit.createForm(
-    {
-      fields: [
-        {
-          name: "results",
-          label,
-          type: "paragraph",
-          defaultValue: content,
-        },
-      ],
-      title,
-      acceptLabel: "Done",
-    },
-    () => {},
-  );
-  context.ui.showForm(form);
-}
-
-function ctxLine(subreddit: string, postId: string): string {
-  return `r/${subreddit} · ${normalizeThingId(postId)}`;
 }
 
 export function showDemoAnalyzeForm(
@@ -43,15 +16,15 @@ export function showDemoAnalyzeForm(
   postId: string,
   reason?: string,
 ): void {
-  const lines = [
-    `# WROSE Analyze Thread (Demo)`,
-    `Status: demo_mode | Backend: false | Auto-action: false`,
-    ctxLine(subreddit, postId),
-    `Suggested view: review`,
-    reason ?? `No backend connected. Menu/pipeline working. No live analysis.`,
-    SAFETY,
-  ];
-  showForm(context, "WROSE: Analyze Thread (Demo)", "Info", lines.join("\n"));
+  showResultForm(context, {
+    title: "WROSE: Analyze Thread",
+    description: "Status: demo_mode | Backend: false | Auto-action: false",
+    sections: [
+      { label: "Post", content: CTX(subreddit, postId), lineHeight: 2 },
+      { label: "Result", content: reason ?? "Demo Mode active. No live backend analysis.", lineHeight: 3 },
+      { label: "Safety", content: SAFETY, lineHeight: 2 },
+    ],
+  });
 }
 
 export function showDemoVolatilityForm(
@@ -60,15 +33,18 @@ export function showDemoVolatilityForm(
   postId: string,
   reason?: string,
 ): void {
-  const lines = [
-    `# WROSE Volatility Check (Demo)`,
-    `Status: demo_mode | Score: 0.42 | Backend: false | Auto-action: false`,
-    ctxLine(subreddit, postId),
-    reason ?? `No backend. Pipeline confirmed working. No live scoring.`,
-    `Factors: not connected · engine unavailable · menu executed`,
-    SAFETY,
-  ];
-  showForm(context, "WROSE: Volatility Check (Demo)", "Info", lines.join("\n"));
+  showResultForm(context, {
+    title: "WROSE: Volatility Check",
+    description: "Status: demo_mode | Score: 0.42 | Backend: false | Auto-action: false",
+    sections: [
+      { label: "Post", content: CTX(subreddit, postId), lineHeight: 2 },
+      { label: "Result", content: [
+        reason ?? "Demo Mode active. No live scoring.",
+        "Factors: not connected · engine unavailable · menu executed",
+      ].join("\n"), lineHeight: 3 },
+      { label: "Safety", content: SAFETY, lineHeight: 2 },
+    ],
+  });
 }
 
 function extractHost(url: string | undefined | null): string {
@@ -90,24 +66,26 @@ export function showDemoCapabilitiesForm(
   context: Context,
   diag?: BackendDiagnostics,
 ): void {
-  const parts: string[] = [
-    `# WROSE Capabilities (Demo)`,
-    `Status: demo_mode | Backend: false | Auto-action: false`,
-  ];
+  const parts: string[] = [];
   if (diag) {
     parts.push(
       `Setting: ${diag.settingPresent} | URL: ${diag.urlType}${diag.host ? ` | Host: ${diag.host}` : ""}`,
+      `Fetch: ${diag.fetchAttempted ? "attempted" : "skipped"} · result: ${diag.fetchResult}`,
     );
-    parts.push(`Fetch: ${diag.fetchAttempted ? "attempted" : "skipped"} · result: ${diag.fetchResult}`);
     if (diag.fetchError) parts.push(`Error: ${diag.fetchError}`);
   }
   parts.push(
-    ``,
     `Available: Analyze Thread · Volatility Check · Capabilities`,
     `Requires backend: live scoring · ingestion · historical`,
-    SAFETY,
   );
-  showForm(context, "WROSE: About / Capabilities", "Capabilities", parts.join("\n"));
+  showResultForm(context, {
+    title: "WROSE: Capabilities",
+    description: "Status: demo_mode | Backend: false | Auto-action: false",
+    sections: [
+      { label: "Diagnostics", content: parts.join("\n"), lineHeight: 5 },
+      { label: "Safety", content: SAFETY, lineHeight: 2 },
+    ],
+  });
 }
 
 export function buildBackendDiagnostics(
@@ -118,22 +96,10 @@ export function buildBackendDiagnostics(
 ): BackendDiagnostics {
   const settingPresent = !!baseUrl;
   let urlType: "missing" | "localhost" | "configured";
-  if (!settingPresent) {
-    urlType = "missing";
-  } else if (isLocalhostUrl(baseUrl)) {
-    urlType = "localhost";
-  } else {
-    urlType = "configured";
-  }
-  const diag: BackendDiagnostics = {
-    settingPresent,
-    urlType,
-    host: extractHost(baseUrl),
-    fetchAttempted,
-    fetchResult,
-  };
-  if (fetchError) {
-    diag.fetchError = fetchError;
-  }
+  if (!settingPresent) urlType = "missing";
+  else if (isLocalhostUrl(baseUrl)) urlType = "localhost";
+  else urlType = "configured";
+  const diag: BackendDiagnostics = { settingPresent, urlType, host: extractHost(baseUrl), fetchAttempted, fetchResult };
+  if (fetchError) diag.fetchError = fetchError;
   return diag;
 }

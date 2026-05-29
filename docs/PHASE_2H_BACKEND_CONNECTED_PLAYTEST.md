@@ -82,33 +82,41 @@ HTTP request to domain: unwomanly-myspace-cleat.ngrok-free.dev is not allowed
 - ❌ Cannot switch to first-party hosted backend (WROSE is self-hosted by design)
 - ❌ Cannot bypass approval — it is enforced by Reddit's runtime, not configurable
 
-## Known UX Issue: Form Modal Size
+## Known UX Issue: Form Modal Size (Mitigated)
 
-Devvit's form modal is a fixed-size `<textarea>` inside a popup. On desktop the visible area is approximately 4 lines of text. Even after compacting output to remove blank lines and shorten labels, the full response still requires scrolling.
+Devvit's form modal is a fixed-size popup that cannot be resized by the user. On desktop, the visible content area is approximately 4 lines of text.
 
-### Example: Analyze Thread (Demo Mode) after compaction
-```
-# WROSE Analyze Thread (Demo)
-Status: demo_mode | Backend: false | Auto-action: false
-r/wrose_sentinel_dev · t3_abc123
-Suggested view: review
-No backend connected. Menu/pipeline working. No live analysis.
-No automated action was taken. WROSE Sentinel is analytical only. No Reddit content was modified.
-```
+### Mitigation applied (v0.0.25)
 
-That's 6 lines — the last 2 lines are hidden behind the scroll. The label `Info` takes a visible line. Title is in the header.
+Refactored all WROSE forms to use the following techniques for maximal readability within the fixed modal:
 
-### Impact
-- Moderators must scroll to see the full response
-- Key info like `automated_action_taken: false` may be off-screen
-- Safety statement is always at the bottom, requires scroll
-- Not fixable without Reddit changing the form modal size or providing an alternative UI output mechanism
+**`lineHeight` on paragraph fields**: The protobuf `FieldConfig_Paragraph` supports `lineHeight` — the number of lines to display in the textarea. Each field now has `lineHeight` set to match its content (2–5 lines), so the textarea renders large enough to show all content without scrolling within the field.
 
-### Possible future mitigations (non-blocking)
-- **Log-based output**: Write results to Redis/console instead of using forms
-- **Custom post output**: Create a Devvit custom post to display results (requires Devvit Web/post framework)
-- **Push notifications**: Use Devvit's notification API to send results (scope unknown)
-- **Separate form per section**: Break results into multiple sequential forms (high friction)
+**`disabled: true`**: All output fields are now read-only (`disabled: true`), which may affect rendering style (no edit cursor, no focus ring).
+
+**Status in form `description`**: The status line (e.g. "Status: demo_mode | Backend: false | Auto-action: false") is now displayed in the form's `description` field — rendered immediately below the title and above all field labels, always visible without scrolling.
+
+**Multiple compact fields**: Content is split into labeled sections ("Post", "Result"/"Signals"/"Diagnostics", "Safety") instead of a single large block. Each section has its own small textarea with appropriate `lineHeight`.
+
+**No markdown headings**: Removed `# Heading` lines from content — the form title and section labels serve that purpose.
+
+**No blank separator lines**: All blank lines removed from content to save vertical space.
+
+**Shared utility**: `src/utils/forms.ts` provides `showResultForm()` and `showErrorForm()` used by all action handlers.
+
+### Example after mitigation
+
+Form "WROSE: Analyze Thread":
+- **description**: "Status: demo_mode | Backend: false | Auto-action: false" (always visible)
+- **Post** field — `lineHeight: 2`: "r/wrose_sentinel_dev · t3_abc123"
+- **Result** field — `lineHeight: 3`: "Demo Mode active. No live backend analysis."
+- **Safety** field — `lineHeight: 2`: "WROSE Sentinel is analytical only. No Reddit content was modified."
+
+All sections visible without scrolling. Status pinned at top.
+
+### Remaining limitation
+- Modal itself is still fixed-size. If a response is very long (e.g. Capabilities with many items), the bottom fields may still require scrolling, but each individual textarea now renders at an appropriate height for its content.
+- Future improvement would require a custom webview post or external dashboard link.
 
 ## Next Steps
 

@@ -2,7 +2,7 @@ import { Devvit, SettingScope } from "@devvit/public-api";
 import { handleAnalyzeThread } from "./actions/analyzeThread.js";
 import { handleVolatilityCheck } from "./actions/volatilityCheck.js";
 import { showCapabilities } from "./actions/capabilities.js";
-import { showErrorForm } from "./components/ErrorBlock.js";
+import { showErrorForm } from "./utils/forms.js";
 
 Devvit.configure({ redditAPI: true, http: true });
 
