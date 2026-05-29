@@ -91,12 +91,13 @@ The URL must not include a trailing path like `/api/v1`. The Devvit app appends 
 
 ### Devvit HTTP Domain Allowlist
 
-Reddit's Devvit runtime requires every backend hostname to be allowlisted in `devvit.yaml`:
+Reddit's Devvit runtime requires every backend hostname to be allowlisted in `devvit.yaml` under `permissions.http.domains`:
 
 ```yaml
-http:
-  domains:
-    - your-tunnel-hostname.ngrok-free.dev
+permissions:
+  http:
+    domains:
+      - your-tunnel-hostname.ngrok-free.dev
 ```
 
 - Free ngrok URLs change each session — each new hostname requires a `devvit.yaml` update and `npx devvit upload`

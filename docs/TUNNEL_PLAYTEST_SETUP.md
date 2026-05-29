@@ -153,11 +153,12 @@ After testing:
 
 If diagnostics show `HTTP request to domain: ... is not allowed`:
 
-1. Add the tunnel hostname to `apps/devvit/wrose-sentinel/devvit.yaml` under `http.domains`:
+1. Add the tunnel hostname to `apps/devvit/wrose-sentinel/devvit.yaml` under `permissions.http.domains`:
    ```yaml
-   http:
-     domains:
-       - your-tunnel-hostname.ngrok-free.dev
+   permissions:
+     http:
+       domains:
+         - your-tunnel-hostname.ngrok-free.dev
    ```
 2. Re-run `npx devvit upload` to apply
 3. Re-run `npx devvit playtest r/wrose_sentinel_dev`
