@@ -1,10 +1,8 @@
 import { Devvit, Context } from "@devvit/public-api";
 import { normalizeThingId } from "./id.js";
 
-const SAFETY_LINE =
-  "No automated action was taken. WROSE Sentinel is analytical only.";
-const NO_MODIFY_LINE =
-  "WROSE Sentinel did not modify Reddit content.";
+const SAFETY =
+  "No automated action was taken. WROSE Sentinel is analytical only. No Reddit content was modified.";
 
 export function isLocalhostUrl(url: string | undefined | null): boolean {
   if (!url) return true;
@@ -35,38 +33,25 @@ function showForm(
   context.ui.showForm(form);
 }
 
+function ctxLine(subreddit: string, postId: string): string {
+  return `r/${subreddit} · ${normalizeThingId(postId)}`;
+}
+
 export function showDemoAnalyzeForm(
   context: Context,
   subreddit: string,
   postId: string,
   reason?: string,
 ): void {
-  const lines: string[] = [
-    `# WROSE Analyze Thread`,
-    ``,
-    `Status: demo_mode`,
-    `Backend connected: false`,
-    `Automated action taken: false`,
-    ``,
-    `Context:`,
-    `- Subreddit: r/${subreddit}`,
-    `- Post ID: ${normalizeThingId(postId)}`,
-    ``,
-    `Result:`,
-    `- Demo Mode active — no live backend connected`,
-    `- Suggested moderator view: review`,
-    ``,
-    `Explanation:`,
-    reason ? `- ${reason}` : `- WROSE Sentinel is running without a backend connection.`,
-    `- The menu action and form display are working correctly.`,
-    `- No live signal analysis was performed on this thread.`,
-    ``,
-    `Safety:`,
-    `- ${SAFETY_LINE}`,
-    `- ${NO_MODIFY_LINE}`,
+  const lines = [
+    `# WROSE Analyze Thread (Demo)`,
+    `Status: demo_mode | Backend: false | Auto-action: false`,
+    ctxLine(subreddit, postId),
+    `Suggested view: review`,
+    reason ?? `No backend connected. Menu/pipeline working. No live analysis.`,
+    SAFETY,
   ];
-
-  showForm(context, "WROSE: Analyze Thread (Demo)", "Demo Analysis", lines.join("\n"));
+  showForm(context, "WROSE: Analyze Thread (Demo)", "Info", lines.join("\n"));
 }
 
 export function showDemoVolatilityForm(
@@ -75,36 +60,15 @@ export function showDemoVolatilityForm(
   postId: string,
   reason?: string,
 ): void {
-  const lines: string[] = [
-    `# WROSE Volatility Check`,
-    ``,
-    `Status: demo_mode`,
-    `Volatility Score: 0.42 (placeholder)`,
-    `Backend connected: false`,
-    `Automated action taken: false`,
-    ``,
-    `Context:`,
-    `- Subreddit: r/${subreddit}`,
-    `- Post ID: ${normalizeThingId(postId)}`,
-    ``,
-    `Result:`,
-    `- Demo Mode active — no live backend connected`,
-    `- Contributing factors:`,
-    `  - Backend not connected`,
-    `  - Live signal engine unavailable`,
-    `  - Devvit menu action executed successfully`,
-    ``,
-    `Explanation:`,
-    reason ? `- ${reason}` : `- WROSE Sentinel is running without a backend connection.`,
-    `- The volatility check pipeline (menu action, API call, response) is confirmed working.`,
-    `- No live volatility scoring was performed.`,
-    ``,
-    `Safety:`,
-    `- ${SAFETY_LINE}`,
-    `- ${NO_MODIFY_LINE}`,
+  const lines = [
+    `# WROSE Volatility Check (Demo)`,
+    `Status: demo_mode | Score: 0.42 | Backend: false | Auto-action: false`,
+    ctxLine(subreddit, postId),
+    reason ?? `No backend. Pipeline confirmed working. No live scoring.`,
+    `Factors: not connected · engine unavailable · menu executed`,
+    SAFETY,
   ];
-
-  showForm(context, "WROSE: Volatility Check (Demo)", "Demo Volatility Check", lines.join("\n"));
+  showForm(context, "WROSE: Volatility Check (Demo)", "Info", lines.join("\n"));
 }
 
 function extractHost(url: string | undefined | null): string {
@@ -126,50 +90,24 @@ export function showDemoCapabilitiesForm(
   context: Context,
   diag?: BackendDiagnostics,
 ): void {
-  const lines: string[] = [
-    `# WROSE Sentinel — Capabilities`,
-    ``,
-    `Status: demo_mode`,
-    `Backend connected: false`,
-    `Automated action taken: false`,
-    ``,
-    diag ? formatDiagnostics(diag) : `Backend setting present: unknown`,
-    ``,
-    `Available in Demo Mode:`,
-    `- Analyze Thread — view thread context and placeholder signals`,
-    `- Volatility Check — view placeholder volatility score and factors`,
-    `- About / Capabilities — this screen`,
-    ``,
-    `Requires Backend Connection:`,
-    `- Live signal scoring (activity velocity, sentiment drift, etc.)`,
-    `- Real volatility scoring with backend data`,
-    `- Subreddit ingestion and data storage`,
-    `- Per-thread historical analysis`,
-    ``,
-    `Safety:`,
-    `- No automated moderation actions are performed`,
-    `- No content is removed, locked, banned, muted, reported, approved, distinguished, or deleted`,
-    `- All responses include automated_action_taken: false`,
-    `- ${NO_MODIFY_LINE}`,
-  ];
-
-  showForm(context, "WROSE: About / Capabilities", "Capabilities", lines.join("\n"));
-}
-
-function formatDiagnostics(diag: BackendDiagnostics): string {
   const parts: string[] = [
-    `Backend setting present: ${diag.settingPresent}`,
-    `Backend URL type: ${diag.urlType}`,
+    `# WROSE Capabilities (Demo)`,
+    `Status: demo_mode | Backend: false | Auto-action: false`,
   ];
-  if (diag.host) {
-    parts.push(`Backend host: ${diag.host}`);
+  if (diag) {
+    parts.push(
+      `Setting: ${diag.settingPresent} | URL: ${diag.urlType}${diag.host ? ` | Host: ${diag.host}` : ""}`,
+    );
+    parts.push(`Fetch: ${diag.fetchAttempted ? "attempted" : "skipped"} · result: ${diag.fetchResult}`);
+    if (diag.fetchError) parts.push(`Error: ${diag.fetchError}`);
   }
-  parts.push(`Fetch attempted: ${diag.fetchAttempted}`);
-  parts.push(`Fetch result: ${diag.fetchResult}`);
-  if (diag.fetchError) {
-    parts.push(`Fetch error: ${diag.fetchError}`);
-  }
-  return parts.join("\n");
+  parts.push(
+    ``,
+    `Available: Analyze Thread · Volatility Check · Capabilities`,
+    `Requires backend: live scoring · ingestion · historical`,
+    SAFETY,
+  );
+  showForm(context, "WROSE: About / Capabilities", "Capabilities", parts.join("\n"));
 }
 
 export function buildBackendDiagnostics(

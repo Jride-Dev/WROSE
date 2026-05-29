@@ -153,17 +153,30 @@ After testing:
 
 If diagnostics show `HTTP request to domain: ... is not allowed`:
 
-1. Add the tunnel hostname to `apps/devvit/wrose-sentinel/devvit.yaml` under `permissions.http.domains`:
-   ```yaml
-   permissions:
-     http:
-       domains:
-         - your-tunnel-hostname.ngrok-free.dev
+1. Add the tunnel hostname to `apps/devvit/wrose-sentinel/devvit.json` under `permissions.http.domains`:
+   ```json
+   "permissions": {
+     "http": {
+       "enable": true,
+       "domains": ["your-tunnel-hostname.ngrok-free.dev"]
+     }
+   }
    ```
-2. Re-run `npx devvit upload` to apply
-3. Re-run `npx devvit playtest r/wrose_sentinel_dev`
+2. Re-run `npx devvit upload --config devvit.json` to apply
+3. Re-run `npx devvit install r/wrose_sentinel_dev` to deploy the updated version
 
-Free ngrok URLs change each session. Each new tunnel hostname must be added to `devvit.yaml` before it will work.
+**Important:** `devvit.json` replaces the legacy `devvit.yaml` and is the only format that properly submits HTTP domains for approval. The legacy `devvit.yaml` `permissions.http.domains` field is not recognized by the current runtime and will silently fail — domains must be declared in `devvit.json`.
+
+### Checking approved domains
+
+Visit **Developer Settings > Apps > wrose-sentinel > Permissions** at `https://developers.reddit.com/apps/wrose-sentinel` to see which domains have been approved or are pending review. After uploading with `devvit.json`, the domain list should appear here.
+
+### Free ngrok URLs require per-session config
+
+Free ngrok URLs change every tunnel session. Each new hostname requires:
+1. Update `devvit.json` `permissions.http.domains` (exact hostname only, no `https://`, no path, no trailing slash, no wildcard)
+2. Re-run `npx devvit upload --config devvit.json`
+3. Re-run `npx devvit install r/wrose_sentinel_dev`
 
 ### Tunnel is slow
 

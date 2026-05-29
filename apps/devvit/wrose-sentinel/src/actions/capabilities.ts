@@ -6,6 +6,9 @@ import {
   buildBackendDiagnostics,
 } from "../utils/demo.js";
 
+const SAFETY =
+  "No automated action was taken. WROSE Sentinel is analytical only. No Reddit content was modified.";
+
 export async function showCapabilities(
   context: Devvit.Context,
 ): Promise<void> {
@@ -38,23 +41,18 @@ function showLiveCapabilitiesForm(
   data: CapabilitiesResponse,
 ): void {
   const lines: string[] = [
-    `# WROSE Sentinel — Capabilities`,
+    "# WROSE Sentinel — Capabilities",
+    `Status: ok | Backend: true | Auto-action: false | Auto enabled: ${data.automated_actions_enabled}`,
     ``,
-    `Status: ok`,
-    `Backend connected: true`,
-    `Automated action taken: false`,
+    "Actions:",
+    ...data.available_actions.map((a: string) => `· ${a}`),
     ``,
-    `## Available Actions`,
-    ...data.available_actions.map((a: string) => `- ${a}`),
+    "Limits:",
+    ...data.current_limitations.map((l: string) => `· ${l}`),
     ``,
-    `## Limitations`,
-    ...data.current_limitations.map((l: string) => `- ${l}`),
-    ``,
-    `## Safety Boundaries`,
-    ...data.safety_boundaries.map((b: string) => `- ${b}`),
-    ``,
-    `Automated actions enabled: ${data.automated_actions_enabled}`,
-    `Automated action taken: ${data.automated_action_taken}`,
+    "Safety:",
+    ...data.safety_boundaries.map((b: string) => `· ${b}`),
+    SAFETY,
   ];
 
   const form = Devvit.createForm(
@@ -62,12 +60,12 @@ function showLiveCapabilitiesForm(
       fields: [
         {
           name: "capabilities",
-          label: "WROSE Sentinel",
+          label: "Capabilities",
           type: "paragraph",
           defaultValue: lines.join("\n"),
         },
       ],
-      title: "WROSE: Capabilities",
+      title: "WROSE: About / Capabilities",
       acceptLabel: "Done",
     },
     () => {},

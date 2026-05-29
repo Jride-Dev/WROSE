@@ -1,0 +1,19 @@
+{
+  "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
+  "name": "wrose-sentinel",
+  "blocks": {},
+  "permissions": {
+    "http": {
+      "enable": true,
+      "domains": [
+        "unwomanly-myspace-cleat.ngrok-free.dev"
+      ]
+    },
+    "reddit": {
+      "enable": true
+    }
+  },
+  "dev": {
+    "subreddit": "wrose_sentinel_dev"
+  }
+}

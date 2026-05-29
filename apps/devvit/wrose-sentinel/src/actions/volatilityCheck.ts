@@ -1,11 +1,11 @@
 import { Devvit } from "@devvit/public-api";
 import { volatilityCheck } from "../utils/api.js";
-import { SAFETY_STATEMENT, checkAutomationFlag } from "../utils/safety.js";
+import { checkAutomationFlag } from "../utils/safety.js";
 import { isLocalhostUrl, showDemoVolatilityForm } from "../utils/demo.js";
 import { normalizeThingId } from "../utils/id.js";
 
-const NO_MODIFY_LINE =
-  "WROSE Sentinel did not modify Reddit content.";
+const SAFETY =
+  "No automated action was taken. WROSE Sentinel is analytical only. No Reddit content was modified.";
 
 export async function handleVolatilityCheck(
   context: Devvit.Context,
@@ -17,11 +17,8 @@ export async function handleVolatilityCheck(
   const postId = context.postId || "";
 
   if (!subreddit || !postId) {
-    showForm(
-      context,
-      "WROSE: Volatility Check",
-      "Could not determine the subreddit or post.\n\nPlease open this menu from a specific post in your subreddit.",
-    );
+    showForm(context, "WROSE: Volatility Check",
+      "Could not determine the subreddit or post. Open this menu from a specific post.");
     return;
   }
 
@@ -35,34 +32,14 @@ export async function handleVolatilityCheck(
     checkAutomationFlag(data);
 
     if (data.status === "no_data") {
-      const lines: string[] = [
-        `# WROSE Volatility Check`,
-        ``,
-        `Status: no_data`,
-        `Backend connected: true`,
-        `Automated action taken: false`,
-        ``,
-        `Context:`,
-        `- Subreddit: r/${subreddit}`,
-        `- Post ID: ${normalizeThingId(postId)}`,
-        ``,
-        `Result:`,
-        `- No stored data found for this subreddit.`,
-        `- Run ingestion first via the WROSE dashboard.`,
-        ``,
-        `Explanation:`,
-        `- WROSE reached the backend successfully, but no ingested data`,
-        `  exists yet for this subreddit.`,
-        ``,
-        `Safety:`,
-        `- ${SAFETY_STATEMENT}`,
-        `- ${NO_MODIFY_LINE}`,
-      ];
-      showForm(
-        context,
-        "WROSE: Volatility Check",
-        lines.join("\n"),
-      );
+      showForm(context, "WROSE: Volatility Check", [
+        "# WROSE Volatility Check",
+        "Status: no_data | Backend: true | Auto-action: false",
+        `r/${subreddit} · ${normalizeThingId(postId)}`,
+        "No stored data. Run ingestion first.",
+        "Backend reachable but no data for this subreddit.",
+        SAFETY,
+      ].join("\n"));
       return;
     }
 
@@ -71,72 +48,30 @@ export async function handleVolatilityCheck(
       "No significant volatility factors detected.";
     const score = data.volatility_score?.toFixed(4) ?? "N/A";
     const explanation = data.explanation || "No explanation available.";
-
-    const lines: string[] = [
-      `# WROSE Volatility Check`,
-      ``,
-      `Status: ok`,
-      `Volatility Score: ${score}`,
-      `Automated action taken: false`,
-      ``,
-      `Context:`,
-      `- Subreddit: r/${subreddit}`,
-      `- Post ID: ${normalizeThingId(postId)}`,
-      ``,
-      `Contributing Factors:`,
-      factors,
-      ``,
-      `Explanation:`,
-      explanation,
-      ``,
-      `Safety:`,
-      `- ${SAFETY_STATEMENT}`,
-      `- WROSE Sentinel did not modify Reddit content.`,
-    ];
-
-    const resultsForm = Devvit.createForm(
-      {
-        fields: [
-          {
-            name: "results",
-            label: "Volatility Results",
-            type: "paragraph",
-            defaultValue: lines.join("\n"),
-          },
-        ],
-        title: "WROSE: Volatility Check",
-        acceptLabel: "Done",
-      },
-      () => {},
-    );
-    context.ui.showForm(resultsForm);
+    showForm(context, "WROSE: Volatility Check", [
+      "# WROSE Volatility Check",
+      `Status: ok | Score: ${score} | Auto-action: false`,
+      `r/${subreddit} · ${normalizeThingId(postId)}`,
+      `Factors: ${data.contributing_factors ? data.contributing_factors.join(" · ") : "none"}`,
+      `Explanation: ${explanation}`,
+      SAFETY,
+    ].join("\n"));
   } catch {
     showDemoVolatilityForm(
       context,
       subreddit,
       postId,
-      "WROSE API Base URL is configured but the backend did not respond.",
+      "Backend URL configured but did not respond.",
     );
   }
 }
 
-function showForm(
-  context: Devvit.Context,
-  title: string,
-  message: string,
-): void {
+function showForm(context: Devvit.Context, title: string, message: string): void {
   const form = Devvit.createForm(
     {
-      fields: [
-        {
-          name: "error",
-          label: "Notice",
-          type: "paragraph",
-          defaultValue: message,
-        },
-      ],
+      fields: [{ name: "results", label: "Info", type: "paragraph", defaultValue: message }],
       title,
-      acceptLabel: "OK",
+      acceptLabel: "Done",
     },
     () => {},
   );
