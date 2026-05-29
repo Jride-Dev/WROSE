@@ -1,6 +1,10 @@
 import { Devvit } from "@devvit/public-api";
 import { fetchCapabilities, CapabilitiesResponse } from "../utils/api.js";
-import { isLocalhostUrl, showDemoCapabilitiesForm } from "../utils/demo.js";
+import {
+  isLocalhostUrl,
+  showDemoCapabilitiesForm,
+  buildBackendDiagnostics,
+} from "../utils/demo.js";
 
 export async function showCapabilities(
   context: Devvit.Context,
@@ -10,15 +14,22 @@ export async function showCapabilities(
     | undefined;
 
   if (isLocalhostUrl(baseUrl)) {
-    showDemoCapabilitiesForm(context);
+    const diag = buildBackendDiagnostics(baseUrl, false, "skipped");
+    showDemoCapabilitiesForm(context, diag);
     return;
   }
 
   try {
     const data = await fetchCapabilities(baseUrl!);
     showLiveCapabilitiesForm(context, data);
-  } catch {
-    showDemoCapabilitiesForm(context);
+  } catch (err) {
+    const diag = buildBackendDiagnostics(
+      baseUrl,
+      true,
+      "failed",
+      err instanceof Error ? err.message : "Unknown error",
+    );
+    showDemoCapabilitiesForm(context, diag);
   }
 }
 
@@ -28,6 +39,10 @@ function showLiveCapabilitiesForm(
 ): void {
   const lines: string[] = [
     `# WROSE Sentinel — Capabilities`,
+    ``,
+    `Status: ok`,
+    `Backend connected: true`,
+    `Automated action taken: false`,
     ``,
     `## Available Actions`,
     ...data.available_actions.map((a: string) => `- ${a}`),

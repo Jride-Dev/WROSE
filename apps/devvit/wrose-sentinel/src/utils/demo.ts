@@ -107,13 +107,33 @@ export function showDemoVolatilityForm(
   showForm(context, "WROSE: Volatility Check (Demo)", "Demo Volatility Check", lines.join("\n"));
 }
 
-export function showDemoCapabilitiesForm(context: Context): void {
+function extractHost(url: string | undefined | null): string {
+  if (!url) return "";
+  const m = url.match(/^https?:\/\/([^\/?#]+)/);
+  return m ? m[1] : "invalid";
+}
+
+export interface BackendDiagnostics {
+  settingPresent: boolean;
+  urlType: "missing" | "localhost" | "configured";
+  host: string;
+  fetchAttempted: boolean;
+  fetchResult: "skipped" | "success" | "failed";
+  fetchError?: string;
+}
+
+export function showDemoCapabilitiesForm(
+  context: Context,
+  diag?: BackendDiagnostics,
+): void {
   const lines: string[] = [
     `# WROSE Sentinel — Capabilities`,
     ``,
     `Status: demo_mode`,
     `Backend connected: false`,
     `Automated action taken: false`,
+    ``,
+    diag ? formatDiagnostics(diag) : `Backend setting present: unknown`,
     ``,
     `Available in Demo Mode:`,
     `- Analyze Thread — view thread context and placeholder signals`,
@@ -134,4 +154,48 @@ export function showDemoCapabilitiesForm(context: Context): void {
   ];
 
   showForm(context, "WROSE: About / Capabilities", "Capabilities", lines.join("\n"));
+}
+
+function formatDiagnostics(diag: BackendDiagnostics): string {
+  const parts: string[] = [
+    `Backend setting present: ${diag.settingPresent}`,
+    `Backend URL type: ${diag.urlType}`,
+  ];
+  if (diag.host) {
+    parts.push(`Backend host: ${diag.host}`);
+  }
+  parts.push(`Fetch attempted: ${diag.fetchAttempted}`);
+  parts.push(`Fetch result: ${diag.fetchResult}`);
+  if (diag.fetchError) {
+    parts.push(`Fetch error: ${diag.fetchError}`);
+  }
+  return parts.join("\n");
+}
+
+export function buildBackendDiagnostics(
+  baseUrl: string | undefined | null,
+  fetchAttempted: boolean,
+  fetchResult: "skipped" | "success" | "failed",
+  fetchError?: string,
+): BackendDiagnostics {
+  const settingPresent = !!baseUrl;
+  let urlType: "missing" | "localhost" | "configured";
+  if (!settingPresent) {
+    urlType = "missing";
+  } else if (isLocalhostUrl(baseUrl)) {
+    urlType = "localhost";
+  } else {
+    urlType = "configured";
+  }
+  const diag: BackendDiagnostics = {
+    settingPresent,
+    urlType,
+    host: extractHost(baseUrl),
+    fetchAttempted,
+    fetchResult,
+  };
+  if (fetchError) {
+    diag.fetchError = fetchError;
+  }
+  return diag;
 }
