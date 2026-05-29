@@ -65,18 +65,23 @@ See `docs/TUNNEL_PLAYTEST_SETUP.md` for detailed setup instructions.
 ## Recommended Path for Playtest
 
 1. Start with **Option 1** (local) for local browser testing of the backend
-2. Use **Option 2** (ngrok or Cloudflare Tunnel) for the actual Devvit playtest
+2. Use **Option 2** with the **stable Cloudflare Tunnel hostname** (`wrose-api.jri-techyes.top`) for the actual Devvit playtest
 3. Re-evaluate for public launch
+
+### Why Stable Hostname Matters
+
+Free ngrok URLs change every tunnel session, requiring a `devvit.json` update, re-upload, and re-install each time — and each new hostname requires a fresh Reddit HTTP domain approval cycle. Cloudflare Tunnel with a stable DNS hostname avoids this: the domain is approved once in Developer Settings, and the backend can be restarted or the tunnel reconnected without changing the hostname.
 
 ## Expected Backend URL Format
 
 The `wroseApiBaseUrl` setting expects a URL pointing to the backend root. Examples:
 
 ```
-http://127.0.0.1:8000                  # local only — Devvit cannot reach
-https://abc123.ngrok.io                # ngrok tunnel — Devvit can reach
-https://wrose-tunnel.example.com       # Cloudflare Tunnel — Devvit can reach
-https://wrose-api.fly.dev              # deployed backend — Devvit can reach
+http://127.0.0.1:8000                         # local only — Devvit cannot reach
+https://wrose-api.jri-techyes.top              # Cloudflare Tunnel (stable) — preferred for playtest
+https://abc123.ngrok.io                       # ngrok tunnel (per-session) — Devvit can reach
+https://wrose-tunnel.example.com               # alternative Cloudflare Tunnel — Devvit can reach
+https://wrose-api.fly.dev                     # deployed backend — Devvit can reach
 ```
 
 The URL must not include a trailing path like `/api/v1`. The Devvit app appends route paths (e.g., `/devvit/capabilities`).
@@ -91,19 +96,20 @@ The URL must not include a trailing path like `/api/v1`. The Devvit app appends 
 
 ### Devvit HTTP Domain Allowlist
 
-Reddit's Devvit runtime requires every backend hostname to be allowlisted in `devvit.yaml` under `permissions.http.domains`:
+Reddit's Devvit runtime requires every backend hostname to be allowlisted in `devvit.json` under `permissions.http.domains`:
 
-```yaml
-permissions:
-  http:
-    domains:
-      - your-tunnel-hostname.ngrok-free.dev
+```json
+"permissions": {
+  "http": {
+    "enable": true,
+    "domains": ["wrose-api.jri-techyes.top"]
+  }
+}
 ```
 
-- Free ngrok URLs change each session — each new hostname requires a `devvit.yaml` update and `npx devvit upload`
-- Cloudflare Tunnel URLs are similarly dynamic
-- The domain entry must be the bare hostname (no `https://` prefix, no path)
-- For production, use a fixed domain or wildcard entry
+- The domain entry must be the bare hostname only (no `https://` prefix, no path, no trailing slash, no wildcard)
+- **Stable hostname is critical**: a fixed hostname (`wrose-api.jri-techyes.top`) only needs Reddit approval once. Free ngrok URLs change every session and each new hostname requires a fresh approval cycle.
+- After updating `devvit.json`, run `npx devvit upload --config devvit.json` then `npx devvit install r/wrose_sentinel_dev`
 
 ### Safety Controls for Tunnel Use
 
@@ -137,6 +143,8 @@ After playtest:
 
 ## Current Decision
 
-During Phase 2, the backend remains local-only (`127.0.0.1:8000`).
+The playtest backend uses Cloudflare Tunnel with the stable hostname `wrose-api.jri-techyes.top`. This hostname is allowlisted in `devvit.json` and submitted to Reddit for HTTP domain approval. Unlike per-session ngrok URLs, the stable hostname avoids repeated approval cycles.
 
-A tunnel will be set up when manual playtest is ready to proceed. See `docs/TUNNEL_PLAYTEST_SETUP.md` for setup steps.
+Devvit app setting `wroseApiBaseUrl` should be set to `https://wrose-api.jri-techyes.top`.
+
+See `docs/TUNNEL_PLAYTEST_SETUP.md` for tunnel setup steps.

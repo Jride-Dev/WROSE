@@ -9,11 +9,63 @@ A tunnel creates a public HTTPS URL that forwards requests to your local backend
 ## Prerequisites
 
 - WROSE backend installed and working locally
-- One of the following installed: `ngrok` or `cloudflared`
+- `cloudflared` installed (preferred) or `ngrok`
 
 ---
 
-## Option A: ngrok
+## Option A: Cloudflare Tunnel (Preferred — Stable Hostname)
+
+The preferred playtest setup uses a Cloudflare Tunnel with the stable hostname `wrose-api.jri-techyes.top`. Unlike free ngrok URLs that change each session, this hostname remains constant, so Reddit's HTTP domain approval only needs to happen once.
+
+### Step 1: Start the Backend
+
+```bash
+cd apps/api
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+### Step 2: Install cloudflared
+
+If not already installed:
+
+```bash
+# Windows (winget)
+winget install cloudflare.cloudflared
+
+# Or download from https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/
+```
+
+### Step 3: Start the Tunnel
+
+```bash
+cloudflared tunnel --url http://127.0.0.1:8000
+```
+
+cloudflared displays the tunnel URL (varies per session). The backend is then reachable at the stable hostname `https://wrose-api.jri-techyes.top`.
+
+### Step 4: Configure Devvit App
+
+1. Go to the Devvit app page: `https://developers.reddit.com/apps/wrose-sentinel`
+2. Open app settings
+3. Set `wroseApiBaseUrl` to `https://wrose-api.jri-techyes.top`
+4. Save
+
+### Step 5: Verify Tunnel Is Working
+
+```bash
+curl https://wrose-api.jri-techyes.top/health
+curl https://wrose-api.jri-techyes.top/devvit/capabilities
+```
+
+Both should return valid JSON responses.
+
+### Step 6: Proceed to Playtest
+
+Follow `docs/devvit_playtest_checklist.md` for the manual playtest steps.
+
+---
+
+## Option B: ngrok (Temporary — Hostname Changes Per Session)
 
 ### Step 1: Start the Backend
 
@@ -42,77 +94,13 @@ Copy the `https://abc123.ngrok.io` URL.
 
 ### Step 4: Configure Devvit App
 
-1. Go to the Devvit app page: `https://developers.reddit.com/apps/wrose-sentinel`
-2. Open app settings
-3. Set `wroseApiBaseUrl` to your ngrok HTTPS URL (e.g., `https://abc123.ngrok.io`)
-4. Save
-
-Or, if you have the Devvit CLI and the app is already installed:
-
-```bash
-devvit settings set wroseApiBaseUrl https://abc123.ngrok.io
-```
+Use the ngrok URL in the same way as Option A Step 4, but you must also update `devvit.json` with the new hostname, re-upload, and re-install (see "Free ngrok URLs require per-session config" under Troubleshooting).
 
 ### Step 5: Verify Tunnel Is Working
 
 ```bash
 curl https://abc123.ngrok.io/health
 curl https://abc123.ngrok.io/devvit/capabilities
-```
-
-Both should return valid JSON responses.
-
-### Step 6: Proceed to Playtest
-
-Follow `docs/devvit_playtest_checklist.md` for the manual playtest steps.
-
----
-
-## Option B: Cloudflare Tunnel
-
-### Step 1: Start the Backend
-
-```bash
-cd apps/api
-python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
-```
-
-### Step 2: Install cloudflared
-
-If not already installed:
-
-```bash
-# Windows (winget)
-winget install cloudflare.cloudflared
-
-# Or download from https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/
-```
-
-### Step 3: Run the Tunnel
-
-```bash
-cloudflared tunnel --url http://127.0.0.1:8000
-```
-
-### Step 4: Copy the Tunnel URL
-
-cloudflared displays something like:
-
-```
-https://random-name.trycloudflare.com
-```
-
-Copy this URL.
-
-### Step 5: Configure Devvit App
-
-Same as Option A Step 4, but use the Cloudflare tunnel URL.
-
-### Step 6: Verify Tunnel Is Working
-
-```bash
-curl https://random-name.trycloudflare.com/health
-curl https://random-name.trycloudflare.com/devvit/capabilities
 ```
 
 Both should return valid JSON responses.
