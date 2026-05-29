@@ -4,7 +4,7 @@ import { handleVolatilityCheck } from "./actions/volatilityCheck.js";
 import { showCapabilities } from "./actions/capabilities.js";
 import { showErrorForm } from "./components/ErrorBlock.js";
 
-Devvit.configure({ redditAPI: true });
+Devvit.configure({ redditAPI: true, http: true });
 
 Devvit.addSettings([
   {
