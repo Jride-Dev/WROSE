@@ -116,7 +116,23 @@ All sections visible without scrolling. Status pinned at top.
 
 ### Remaining limitation
 - Modal itself is still fixed-size. If a response is very long (e.g. Capabilities with many items), the bottom fields may still require scrolling, but each individual textarea now renders at an appropriate height for its content.
-- Future improvement would require a custom webview post or external dashboard link.
+
+## Future Mitigations for Long-Form Output
+
+For real long-form output later, the proper solution is one of these approaches (in increasing order of effort):
+
+1. **Keep modal short and summary-only** — strip the form to bare essentials (status, score, a one-line verdict). Move detail to a log or external link.
+
+2. **Open the external WROSE dashboard for details** — add a clickable link or instruction in the modal telling the moderator to check the dashboard at a known URL for full signal breakdowns, timelines, and historical data.
+
+3. **Build a custom Devvit webview/post UI later** — create a native Devvit post type with a webview that renders a full-size interactive report. This is the proper long-term solution but requires Devvit Web framework setup (post config, server endpoints, React/frontend bundle).
+
+4. **Add separate actions: Summary, Diagnostics, Details** — instead of one "Analyze Thread" action, offer multiple menu items:
+   - `WROSE: Quick Scan` — one-line verdict in the modal
+   - `WROSE: Full Report` — opens the dashboard URL
+   - `WROSE: Diagnostics` — connection/backend health check
+   
+   Each action fits its output to the modal constraints by keeping content purpose-built and short.
 
 ## Next Steps
 

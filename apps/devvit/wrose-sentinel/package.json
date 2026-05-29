@@ -11,10 +11,11 @@
     "devvit:logs": "devvit logs"
   },
   "dependencies": {
-    "@devvit/public-api": "0.12.24"
+    "@devvit/public-api": "0.13.0",
+    "devvit": "0.13.0"
   },
   "devDependencies": {
-    "@devvit/tsconfig": "0.12.24",
-    "typescript": "^5.3.0"
+    "@devvit/tsconfig": "0.13.0",
+    "typescript": "5.8.3"
   }
 }
