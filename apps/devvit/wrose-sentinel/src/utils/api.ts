@@ -34,9 +34,14 @@ async function fetchWithTimeout(
 ): Promise<Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const mergedHeaders: Record<string, string> = {
+    "ngrok-skip-browser-warning": "true",
+    ...(options.headers as Record<string, string>),
+  };
   try {
     const response = await fetch(url, {
       ...options,
+      headers: mergedHeaders,
       signal: controller.signal,
     });
     return response;
@@ -48,12 +53,18 @@ async function fetchWithTimeout(
 export async function fetchCapabilities(
   baseUrl: string,
 ): Promise<CapabilitiesResponse> {
-  const url = `${baseUrl.replace(/\/+$/, "")}/devvit/capabilities`;
+  const path = "/devvit/capabilities";
+  const url = `${baseUrl.replace(/\/+$/, "")}${path}`;
   const res = await fetchWithTimeout(url);
   if (!res.ok) {
+    console.log(`WROSE: ${path} HTTP ${res.status} FAIL`);
     throw new Error(`Capabilities request failed: ${res.status}`);
   }
-  return res.json();
+  const data: CapabilitiesResponse = await res.json();
+  console.log(
+    `WROSE: ${path} HTTP ${res.status} backend_status=${(data as any).status ?? "ok"}`,
+  );
+  return data;
 }
 
 export async function analyzeThread(
@@ -61,16 +72,22 @@ export async function analyzeThread(
   subreddit: string,
   postId: string,
 ): Promise<AnalyzeThreadResponse> {
-  const url = `${baseUrl.replace(/\/+$/, "")}/devvit/analyze-thread`;
+  const path = "/devvit/analyze-thread";
+  const url = `${baseUrl.replace(/\/+$/, "")}${path}`;
   const res = await fetchWithTimeout(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ subreddit, post_id: postId }),
   });
   if (!res.ok) {
+    console.log(`WROSE: ${path} HTTP ${res.status} FAIL`);
     throw new Error(`Analyze thread request failed: ${res.status}`);
   }
-  return res.json();
+  const data: AnalyzeThreadResponse = await res.json();
+  console.log(
+    `WROSE: ${path} HTTP ${res.status} backend_status=${data.status}`,
+  );
+  return data;
 }
 
 export async function volatilityCheck(
@@ -78,14 +95,20 @@ export async function volatilityCheck(
   subreddit: string,
   postId: string,
 ): Promise<VolatilityCheckResponse> {
-  const url = `${baseUrl.replace(/\/+$/, "")}/devvit/volatility-check`;
+  const path = "/devvit/volatility-check";
+  const url = `${baseUrl.replace(/\/+$/, "")}${path}`;
   const res = await fetchWithTimeout(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ subreddit, post_id: postId }),
   });
   if (!res.ok) {
+    console.log(`WROSE: ${path} HTTP ${res.status} FAIL`);
     throw new Error(`Volatility check request failed: ${res.status}`);
   }
-  return res.json();
+  const data: VolatilityCheckResponse = await res.json();
+  console.log(
+    `WROSE: ${path} HTTP ${res.status} backend_status=${data.status}`,
+  );
+  return data;
 }

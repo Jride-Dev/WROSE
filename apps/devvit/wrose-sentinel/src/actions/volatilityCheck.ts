@@ -4,6 +4,9 @@ import { SAFETY_STATEMENT, checkAutomationFlag } from "../utils/safety.js";
 import { isLocalhostUrl, showDemoVolatilityForm } from "../utils/demo.js";
 import { normalizeThingId } from "../utils/id.js";
 
+const NO_MODIFY_LINE =
+  "WROSE Sentinel did not modify Reddit content.";
+
 export async function handleVolatilityCheck(
   context: Devvit.Context,
 ): Promise<void> {
@@ -32,12 +35,33 @@ export async function handleVolatilityCheck(
     checkAutomationFlag(data);
 
     if (data.status === "no_data") {
+      const lines: string[] = [
+        `# WROSE Volatility Check`,
+        ``,
+        `Status: no_data`,
+        `Backend connected: true`,
+        `Automated action taken: false`,
+        ``,
+        `Context:`,
+        `- Subreddit: r/${subreddit}`,
+        `- Post ID: ${normalizeThingId(postId)}`,
+        ``,
+        `Result:`,
+        `- No stored data found for this subreddit.`,
+        `- Run ingestion first via the WROSE dashboard.`,
+        ``,
+        `Explanation:`,
+        `- WROSE reached the backend successfully, but no ingested data`,
+        `  exists yet for this subreddit.`,
+        ``,
+        `Safety:`,
+        `- ${SAFETY_STATEMENT}`,
+        `- ${NO_MODIFY_LINE}`,
+      ];
       showForm(
         context,
         "WROSE: Volatility Check",
-        `No stored data found for r/${subreddit}.\n\n` +
-        `Ingest this subreddit first via the WROSE dashboard, then try again.\n\n` +
-        `${SAFETY_STATEMENT}`,
+        lines.join("\n"),
       );
       return;
     }
