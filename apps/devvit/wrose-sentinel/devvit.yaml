@@ -8,6 +8,9 @@ description: >
   Analytical only — no automated moderation.
 author: WROSE
 scope: Post
+http:
+  domains:
+    - unwomanly-myspace-cleat.ngrok-free.dev
 dependencies:
   - "@devvit/public-api"
 settings:

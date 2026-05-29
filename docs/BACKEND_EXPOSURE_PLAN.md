@@ -89,6 +89,21 @@ The URL must not include a trailing path like `/api/v1`. The Devvit app appends 
 - The Devvit readiness routes expect unstructured input — validate on the backend before any production exposure
 - A public endpoint with no auth can be abused for data scraping or unauthorized analysis
 
+### Devvit HTTP Domain Allowlist
+
+Reddit's Devvit runtime requires every backend hostname to be allowlisted in `devvit.yaml`:
+
+```yaml
+http:
+  domains:
+    - your-tunnel-hostname.ngrok-free.dev
+```
+
+- Free ngrok URLs change each session — each new hostname requires a `devvit.yaml` update and `npx devvit upload`
+- Cloudflare Tunnel URLs are similarly dynamic
+- The domain entry must be the bare hostname (no `https://` prefix, no path)
+- For production, use a fixed domain or wildcard entry
+
 ### Safety Controls for Tunnel Use
 
 - Use a short-lived tunnel session — do not leave it running indefinitely

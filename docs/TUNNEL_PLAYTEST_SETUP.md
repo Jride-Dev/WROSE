@@ -149,6 +149,21 @@ After testing:
 - Verify the URL uses `https://` (tunnels require HTTPS)
 - Check ngrok inspector at `http://127.0.0.1:4040` for incoming requests
 
+### Devvit HTTP domain not allowed
+
+If diagnostics show `HTTP request to domain: ... is not allowed`:
+
+1. Add the tunnel hostname to `apps/devvit/wrose-sentinel/devvit.yaml` under `http.domains`:
+   ```yaml
+   http:
+     domains:
+       - your-tunnel-hostname.ngrok-free.dev
+   ```
+2. Re-run `npx devvit upload` to apply
+3. Re-run `npx devvit playtest r/wrose_sentinel_dev`
+
+Free ngrok URLs change each session. Each new tunnel hostname must be added to `devvit.yaml` before it will work.
+
 ### Tunnel is slow
 
 - ngrok free tier is rate-limited
