@@ -3,12 +3,6 @@
   "name": "wrose-sentinel",
   "blocks": {},
   "permissions": {
-    "http": {
-      "enable": true,
-      "domains": [
-        "wrose-api.jri-techyes.top"
-      ]
-    },
     "reddit": {
       "enable": true
     }

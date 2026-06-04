@@ -4,14 +4,14 @@ import { handleVolatilityCheck } from "./actions/volatilityCheck.js";
 import { showCapabilities } from "./actions/capabilities.js";
 import { showErrorForm } from "./utils/forms.js";
 
-Devvit.configure({ redditAPI: true, http: true });
+Devvit.configure({ redditAPI: true });
 
 Devvit.addSettings([
   {
     name: "wroseApiBaseUrl",
-    label: "WROSE API Base URL",
+    label: "WROSE API Base URL (optional — native Devvit analysis used by default)",
     type: "string",
-    defaultValue: "http://127.0.0.1:8000",
+    defaultValue: "",
     scope: SettingScope.Installation,
   },
   {
@@ -47,7 +47,7 @@ Devvit.addMenuItem({
   label: "WROSE: About / Capabilities",
   location: "subreddit",
   forUserType: "moderator",
-  description: "Learn what WROSE Sentinel can do, view safety boundaries, and check connection status.",
+  description: "Learn what WROSE Sentinel can do, view safety boundaries, and check capabilities.",
   onPress: async (_event, context) => {
     try {
       await showCapabilities(context);
@@ -55,7 +55,7 @@ Devvit.addMenuItem({
       showErrorForm(
         context,
         "WROSE: Error",
-        "Could not load capabilities. Ensure the WROSE backend is running.",
+        "Could not load capabilities.",
       );
     }
   },

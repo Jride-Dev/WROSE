@@ -6,7 +6,7 @@ WROSE is a local-first operational signal engine for Reddit subreddit analysis. 
 
 - **Phase 1A — Core Engine (Complete)**: FastAPI backend, SQLite database, Reddit ingestion scaffold, six operational signals, React/Vite dashboard
 - **Phase 1B — Devvit Readiness Layer (Complete)**: API contracts for WROSE Sentinel Devvit app, safety boundaries, backend readiness routes
-- **Phase 2 — WROSE Sentinel Devvit App (In Progress)**: Reddit-native moderator intelligence assistant — Demo Mode playtest passed, backend-connected mode blocked pending HTTP fetch domain approval
+- **Phase 2I — Native Devvit Sentinel Adapter (Complete)**: WROSE Sentinel now runs native Devvit analysis using Reddit post context — no HTTP fetch required. External backend remains the WROSE signal lab (optional). Reddit rejected personal HTTP fetch domains.
 
 ## Setup
 
@@ -59,17 +59,15 @@ WROSE Sentinel is a Reddit-native moderator intelligence assistant (Devvit app) 
 
 ### Current Status
 
-- **Demo Mode**: Works in Reddit — returns safe placeholder responses when backend is unreachable. Playtest passed (2026-05-28).
-- **Backend-connected mode**: Blocked pending Reddit approval of the HTTP fetch domain (`wrose-api.jri-techyes.top`).
-- **Config**: `devvit.json` replaces legacy `devvit.yaml`. HTTP fetch domain allowlist targets `wrose-api.jri-techyes.top`.
-- **UX**: Modal readability improved (commit `8358bdd`).
-- **Safety invariant**: `automated_action_taken: false` is enforced in every response path. No destructive Reddit moderation actions are implemented.
+- **Native Devvit Analysis (Default)**: Works inside Reddit using post context — no HTTP fetch, tunnel, or external backend needed. Analyzes thread context, computes v0.1 volatility score, suggests moderator view.
+- **External Backend (Optional)**: FastAPI signal lab (`apps/api`) preserved. Integration code behind optional flag. Requires Reddit-approved HTTP fetch domain (both `wrose-api.jri-techyes.top` and ngrok domain were rejected).
+- **Safety invariant**: `automated_action_taken: false` enforced in every path.
+- **Phase 2I complete**: See `docs/PHASE_2I_NATIVE_DEVVIT_ADAPTER.md`.
 
 ### Devvit Playtest Rules
 
 - Playtest only in `r/wrose_sentinel_dev`
-- Do not run `npx devvit publish`
-- Do not run `npx devvit publish --public`
+- Do not run `npx devvit publish` or `npx devvit publish --public`
 - Do not run `npm audit fix --force`
 
 ## Project Structure
@@ -94,6 +92,7 @@ docs/
   BACKEND_EXPOSURE_PLAN.md
   TUNNEL_PLAYTEST_SETUP.md
   SANITY_CHECK_2026-05-28.md
+  PHASE_2I_NATIVE_DEVVIT_ADAPTER.md
   ...
 .env.example
 .gitignore
