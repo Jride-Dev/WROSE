@@ -154,3 +154,129 @@ export function buildThreadSummary(ctx: NativeThreadContext): string {
     `Controversy: ${controversy}`,
   ].join("\n");
 }
+
+export interface NativeCommentInput {
+  authorName: string;
+  body: string;
+  createdAt: Date | string | number;
+  score: number;
+}
+
+export interface CommentSignalsResult {
+  commentsAnalyzed: number;
+  uniqueParticipants: number;
+  opCommentCount: number;
+  recentComments15m: number;
+  recentComments60m: number;
+  hostileCommentCount: number;
+  symbolBurstCount: number;
+  latestCommentAt: Date | null;
+  stale: boolean;
+  confidence: "low" | "medium" | "high";
+}
+
+const HOSTILE_TERMS = [
+  "bullshit", "garbage", "trash", "idiot", "moron",
+  "stupid", "waste", "fuck", "fucking",
+];
+
+function containsHostileTerm(body: string): boolean {
+  const lower = body.toLowerCase();
+  return HOSTILE_TERMS.some((term) => lower.includes(term));
+}
+
+function hasSymbolBurst(body: string): boolean {
+  return /[^a-zA-Z0-9\s]{8,}/.test(body);
+}
+
+export function extractCommentSignals(
+  comments: NativeCommentInput[],
+  postAuthorName: string,
+  now: Date,
+): CommentSignalsResult {
+  const participants = new Set<string>();
+  let opCount = 0;
+  let recent15 = 0;
+  let recent60 = 0;
+  let hostile = 0;
+  let symbolBursts = 0;
+  let latest: Date | null = null;
+
+  for (const c of comments) {
+    const author = c.authorName ?? "";
+    participants.add(author);
+    if (author === postAuthorName) opCount++;
+
+    const createdAt = c.createdAt instanceof Date ? c.createdAt : new Date(c.createdAt ?? now);
+    if (latest === null || createdAt > latest) latest = createdAt;
+
+    const ageHours = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+    const ageMinutes = ageHours * 60;
+
+    if (ageMinutes <= 15) recent15++;
+    if (ageMinutes <= 60) recent60++;
+
+    const body = c.body ?? "";
+    if (containsHostileTerm(body)) hostile++;
+    if (hasSymbolBurst(body)) symbolBursts++;
+  }
+
+  const analyzed = comments.length;
+  const uniqueParticipants = participants.size;
+  const stale = latest === null || (now.getTime() - latest.getTime()) > 72 * 60 * 60 * 1000;
+
+  let confidence: "low" | "medium" | "high";
+  if (analyzed >= 10 && uniqueParticipants >= 3) {
+    confidence = "high";
+  } else if (analyzed >= 5 && uniqueParticipants >= 2) {
+    confidence = "medium";
+  } else {
+    confidence = "low";
+  }
+
+  return {
+    commentsAnalyzed: analyzed,
+    uniqueParticipants,
+    opCommentCount: opCount,
+    recentComments15m: recent15,
+    recentComments60m: recent60,
+    hostileCommentCount: hostile,
+    symbolBurstCount: symbolBursts,
+    latestCommentAt: latest,
+    stale,
+    confidence,
+  };
+}
+
+export function suggestCommentAwareModView(signals: CommentSignalsResult): string {
+  const { uniqueParticipants, recentComments60m, hostileCommentCount, symbolBurstCount, stale, confidence } = signals;
+
+  if (uniqueParticipants < 2) {
+    if (
+      recentComments60m >= 5 ||
+      (hostileCommentCount >= 1 && recentComments60m >= 3) ||
+      (symbolBurstCount >= 1 && recentComments60m >= 3)
+    ) {
+      return `Monitor — single-participant activity (confidence: ${confidence})`;
+    }
+    if (stale) return "Routine — stale thread with no meaningful recent activity";
+    return "Routine — no significant signals detected";
+  }
+
+  if (uniqueParticipants >= 3 && (recentComments60m >= 15 || hostileCommentCount >= 3)) {
+    return "Review — significant multi-participant activity";
+  }
+
+  if (recentComments60m >= 5) {
+    return `Monitor — recent activity (confidence: ${confidence})`;
+  }
+  if (hostileCommentCount >= 1 && recentComments60m >= 3) {
+    return `Monitor — hostile comments detected (confidence: ${confidence})`;
+  }
+  if (symbolBurstCount >= 1 && recentComments60m >= 3) {
+    return `Monitor — unusual comment patterns (confidence: ${confidence})`;
+  }
+
+  if (stale) return "Routine — stale thread with no meaningful recent activity";
+  return "Routine — no significant signals detected";
+}

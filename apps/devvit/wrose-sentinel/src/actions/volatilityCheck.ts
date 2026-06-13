@@ -7,7 +7,10 @@ import { normalizeThingId } from "../utils/id.js";
 import {
   extractThreadContext,
   computeVolatilityScore,
+  extractCommentSignals,
+  suggestCommentAwareModView,
 } from "../utils/native.js";
+import type { NativeCommentInput } from "../utils/native.js";
 
 const SAFETY = "WROSE Sentinel is analytical only. No Reddit content was modified.";
 const CTX = (s: string, p: string) => `r/${s} · ${normalizeThingId(p)}`;
@@ -27,13 +30,47 @@ async function tryNativeVolatility(
       ctx.postAgeHours,
     );
 
+    const rawComments = await context.reddit.getComments({
+      postId,
+      limit: 100,
+      pageSize: 100,
+    }).all();
+
+    const mapped: NativeCommentInput[] = rawComments.map((c) => ({
+      authorName: c.authorName,
+      body: c.body,
+      createdAt: c.createdAt,
+      score: c.score,
+    }));
+
+    const signals = extractCommentSignals(mapped, ctx.postAuthor, new Date());
+    const modView = suggestCommentAwareModView(signals);
+
+    const allFactors = [...factors];
+    if (signals.hostileCommentCount > 0) allFactors.push(`Hostile: ${signals.hostileCommentCount}`);
+    if (signals.symbolBurstCount > 0) allFactors.push(`Symbol bursts: ${signals.symbolBurstCount}`);
+    if (signals.recentComments60m >= 5) allFactors.push(`Active: ${signals.recentComments60m}/hr`);
+    if (signals.stale) allFactors.push("Stale thread");
+    if (signals.confidence === "low") allFactors.push("Low confidence (small sample)");
+
+    const signalsContent = [
+      `Participants: ${signals.uniqueParticipants}`,
+      `Recent: ${signals.recentComments15m} / 15m · ${signals.recentComments60m} / 60m`,
+      `Hostile: ${signals.hostileCommentCount}`,
+      `Symbol bursts: ${signals.symbolBurstCount}`,
+      `Confidence: ${signals.confidence}`,
+      `Stale: ${signals.stale}`,
+    ].join("\n");
+
     showResultForm(context, {
       title: "WROSE: Volatility Check",
       description: `Status: native_analysis | Score: ${score.toFixed(4)} | Backend: native_devvit`,
       sections: [
         { label: "Post", content: CTX(subreddit, postId), lineHeight: 2 },
-        { label: "Result", content: `Factors: ${factors.join(" · ") || "None significant"}`, lineHeight: 2 },
+        { label: "Result", content: `Factors: ${allFactors.join(" · ") || "None significant"}`, lineHeight: 2 },
         { label: "Detail", content: explanation, lineHeight: 3 },
+        { label: "Comment Signals", content: signalsContent, lineHeight: 6 },
+        { label: "Suggested View", content: modView, lineHeight: 2 },
         { label: "Safety", content: SAFETY, lineHeight: 2 },
       ],
     });

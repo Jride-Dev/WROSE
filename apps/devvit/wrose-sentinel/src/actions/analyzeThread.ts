@@ -8,7 +8,10 @@ import {
   extractThreadContext,
   buildThreadSummary,
   suggestModeratorView,
+  extractCommentSignals,
+  suggestCommentAwareModView,
 } from "../utils/native.js";
+import type { NativeCommentInput } from "../utils/native.js";
 
 const SAFETY = "WROSE Sentinel is analytical only. No Reddit content was modified.";
 const CTX = (s: string, p: string) => `r/${s} · ${normalizeThingId(p)}`;
@@ -24,13 +27,39 @@ async function tryNativeAnalysis(
     const summary = buildThreadSummary(ctx);
     const view = suggestModeratorView(ctx.commentCount, ctx.postScore, ctx.upvoteRatio, ctx.postAgeHours);
 
+    const rawComments = await context.reddit.getComments({
+      postId,
+      limit: 100,
+      pageSize: 100,
+    }).all();
+
+    const mapped: NativeCommentInput[] = rawComments.map((c) => ({
+      authorName: c.authorName,
+      body: c.body,
+      createdAt: c.createdAt,
+      score: c.score,
+    }));
+
+    const signals = extractCommentSignals(mapped, ctx.postAuthor, new Date());
+    const commentAwareView = suggestCommentAwareModView(signals);
+
+    const signalsContent = [
+      `Participants: ${signals.uniqueParticipants}`,
+      `Recent: ${signals.recentComments15m} / 15m · ${signals.recentComments60m} / 60m`,
+      `Hostile: ${signals.hostileCommentCount}`,
+      `Symbol bursts: ${signals.symbolBurstCount}`,
+      `Confidence: ${signals.confidence}`,
+      `Stale: ${signals.stale}`,
+    ].join("\n");
+
     showResultForm(context, {
       title: "WROSE: Analyze Thread",
       description: `Status: native_analysis | Backend: native_devvit`,
       sections: [
         { label: "Post", content: CTX(subreddit, postId) + "\n" + ctx.postTitle, lineHeight: 2 },
         { label: "Thread Context", content: summary, lineHeight: 6 },
-        { label: "Suggested View", content: view, lineHeight: 2 },
+        { label: "Comment Signals", content: signalsContent, lineHeight: 6 },
+        { label: "Suggested View", content: `${view}\n\nComment-aware: ${commentAwareView}`, lineHeight: 3 },
         { label: "Safety", content: SAFETY, lineHeight: 2 },
       ],
     });

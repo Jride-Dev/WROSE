@@ -111,5 +111,218 @@ assert(suggestModeratorView(5, 10, 0.95, 1).startsWith("No action"), "mod view: 
 assert(suggestModeratorView(5, 10, 0.8, 48).startsWith("Routine"), "mod view: old thread = Routine");
 assert(suggestModeratorView(5, 10, 0.8, 1).startsWith("Routine"), "mod view: no signals = Routine");
 
+// === Comment-aware helpers ===
+
+const HOSTILE_TERMS = [
+  "bullshit", "garbage", "trash", "idiot", "moron",
+  "stupid", "waste", "fuck", "fucking",
+];
+
+function containsHostileTerm(body) {
+  const lower = body.toLowerCase();
+  return HOSTILE_TERMS.some((term) => lower.includes(term));
+}
+
+function hasSymbolBurst(body) {
+  return /[^a-zA-Z0-9\s]{8,}/.test(body);
+}
+
+function extractCommentSignals(comments, postAuthorName, now) {
+  const participants = new Set();
+  let opCount = 0;
+  let recent15 = 0;
+  let recent60 = 0;
+  let hostile = 0;
+  let symbolBursts = 0;
+  let latest = null;
+
+  for (const c of comments) {
+    const author = c.authorName ?? "";
+    participants.add(author);
+    if (author === postAuthorName) opCount++;
+
+    const createdAt = c.createdAt instanceof Date ? c.createdAt : new Date(c.createdAt ?? now);
+    if (latest === null || createdAt > latest) latest = createdAt;
+
+    const ageHours = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+    const ageMinutes = ageHours * 60;
+
+    if (ageMinutes <= 15) recent15++;
+    if (ageMinutes <= 60) recent60++;
+
+    const body = c.body ?? "";
+    if (containsHostileTerm(body)) hostile++;
+    if (hasSymbolBurst(body)) symbolBursts++;
+  }
+
+  const analyzed = comments.length;
+  const uniqueParticipants = participants.size;
+  const stale = latest === null || (now.getTime() - latest.getTime()) > 72 * 60 * 60 * 1000;
+
+  let confidence;
+  if (analyzed >= 10 && uniqueParticipants >= 3) {
+    confidence = "high";
+  } else if (analyzed >= 5 && uniqueParticipants >= 2) {
+    confidence = "medium";
+  } else {
+    confidence = "low";
+  }
+
+  return {
+    commentsAnalyzed: analyzed,
+    uniqueParticipants,
+    opCommentCount: opCount,
+    recentComments15m: recent15,
+    recentComments60m: recent60,
+    hostileCommentCount: hostile,
+    symbolBurstCount: symbolBursts,
+    latestCommentAt: latest,
+    stale,
+    confidence,
+  };
+}
+
+function suggestCommentAwareModView(signals) {
+  const { uniqueParticipants, recentComments60m, hostileCommentCount, symbolBurstCount, stale, confidence } = signals;
+
+  if (uniqueParticipants < 2) {
+    if (
+      recentComments60m >= 5 ||
+      (hostileCommentCount >= 1 && recentComments60m >= 3) ||
+      (symbolBurstCount >= 1 && recentComments60m >= 3)
+    ) {
+      return `Monitor — single-participant activity (confidence: ${confidence})`;
+    }
+    if (stale) return "Routine — stale thread with no meaningful recent activity";
+    return "Routine — no significant signals detected";
+  }
+
+  if (uniqueParticipants >= 3 && (recentComments60m >= 15 || hostileCommentCount >= 3)) {
+    return "Review — significant multi-participant activity";
+  }
+
+  if (recentComments60m >= 5) {
+    return `Monitor — recent activity (confidence: ${confidence})`;
+  }
+  if (hostileCommentCount >= 1 && recentComments60m >= 3) {
+    return `Monitor — hostile comments detected (confidence: ${confidence})`;
+  }
+  if (symbolBurstCount >= 1 && recentComments60m >= 3) {
+    return `Monitor — unusual comment patterns (confidence: ${confidence})`;
+  }
+
+  if (stale) return "Routine — stale thread with no meaningful recent activity";
+  return "Routine — no significant signals detected";
+}
+
+console.log("\n=== Comment Signal Extraction Tests ===\n");
+
+// Helper: create a comment input
+function makeComment(authorName, body, ageHours, score) {
+  const createdAt = new Date(Date.now() - ageHours * 60 * 60 * 1000);
+  return { authorName, body, createdAt, score: score ?? 1 };
+}
+
+const now = new Date();
+
+// 1. Stale thread: 2 comments, 1 participant, 16 days old → Routine, low confidence
+const staleComments = [
+  makeComment("user1", "old comment", 16 * 24, 1),
+  makeComment("user1", "another old comment", 16 * 24 - 1, 2),
+];
+const staleSignals = extractCommentSignals(staleComments, "author", now);
+assert(staleSignals.stale === true, "stale: 16-day-old comments are stale");
+assert(staleSignals.commentsAnalyzed === 2, "stale: analyzed 2 comments");
+assert(staleSignals.uniqueParticipants === 1, "stale: 1 participant");
+assert(staleSignals.confidence === "low", "stale: low confidence");
+const staleView = suggestCommentAwareModView(staleSignals);
+assert(staleView.startsWith("Routine"), "stale: mod view is Routine");
+
+// 2. Fresh thread: 4 comments, 1 participant, one symbol burst → Monitor, low confidence
+const burstComments = [
+  makeComment("user1", "normal comment", 0.5, 1),
+  makeComment("user1", "normal reply", 0.4, 2),
+  makeComment("user1", "!!!@#$%^&*!!!! test", 0.3, 1),
+  makeComment("user1", "another normal", 0.2, 3),
+];
+const burstSignals = extractCommentSignals(burstComments, "author", now);
+assert(burstSignals.stale === false, "burst: not stale");
+assert(burstSignals.commentsAnalyzed === 4, "burst: analyzed 4 comments");
+assert(burstSignals.uniqueParticipants === 1, "burst: 1 participant");
+assert(burstSignals.symbolBurstCount >= 1, "burst: symbol burst detected");
+assert(burstSignals.confidence === "low", "burst: low confidence");
+const burstView = suggestCommentAwareModView(burstSignals);
+assert(burstView.startsWith("Monitor"), "burst: mod view is Monitor");
+
+// 3. Fresh thread: 6 comments, 3 participants, hostile terms → Monitor or Review
+const hostileComments = [
+  makeComment("user1", "this is bullshit", 0.5, -2),
+  makeComment("user2", "I agree, garbage post", 0.4, -1),
+  makeComment("user3", "normal comment here", 0.3, 5),
+  makeComment("user1", "you are an idiot", 0.2, -3),
+  makeComment("user2", "what a waste of time", 0.1, 0),
+  makeComment("user3", "another normal reply", 0.05, 2),
+];
+const hostileSignals = extractCommentSignals(hostileComments, "author", now);
+assert(hostileSignals.stale === false, "hostile: not stale");
+assert(hostileSignals.commentsAnalyzed === 6, "hostile: analyzed 6 comments");
+assert(hostileSignals.uniqueParticipants === 3, "hostile: 3 participants");
+assert(hostileSignals.hostileCommentCount >= 1, "hostile: hostile terms detected");
+assert(hostileSignals.confidence === "medium", "hostile: medium confidence");
+const hostileView = suggestCommentAwareModView(hostileSignals);
+assert(hostileView.startsWith("Monitor") || hostileView.startsWith("Review"), "hostile: mod view is Monitor or Review");
+
+// 4. Fresh thread: 15 comments, 3 participants, at least 3 hostile → Review
+const reviewComments = [];
+for (let i = 0; i < 12; i++) {
+  reviewComments.push(makeComment(`user${(i % 3) + 1}`, "normal comment", 0.5, 1));
+}
+reviewComments.push(makeComment("user1", "this is bullshit", 0.4, -2));
+reviewComments.push(makeComment("user2", "you are a moron", 0.3, -1));
+reviewComments.push(makeComment("user3", "what a trash post", 0.2, -3));
+const reviewSignals = extractCommentSignals(reviewComments, "author", now);
+assert(reviewSignals.stale === false, "review: not stale");
+assert(reviewSignals.commentsAnalyzed === 15, "review: analyzed 15 comments");
+assert(reviewSignals.uniqueParticipants === 3, "review: 3 participants");
+assert(reviewSignals.hostileCommentCount >= 3, "review: at least 3 hostile comments");
+assert(reviewSignals.confidence === "high", "review: high confidence");
+const reviewView = suggestCommentAwareModView(reviewSignals);
+assert(reviewView.startsWith("Review"), "review: mod view is Review");
+
+// 5. Single participant with 20 comments → never Review
+const singleComments = [];
+for (let i = 0; i < 20; i++) {
+  singleComments.push(makeComment("user1", `comment ${i}`, 0.5, 1));
+}
+const singleSignals = extractCommentSignals(singleComments, "author", now);
+assert(singleSignals.uniqueParticipants === 1, "single: 1 participant");
+assert(singleSignals.commentsAnalyzed === 20, "single: 20 comments");
+const singleView = suggestCommentAwareModView(singleSignals);
+assert(!singleView.startsWith("Review"), "single: never Review with 1 participant");
+
+// 6. Hostility matching is case-insensitive
+assert(containsHostileTerm("This is BULLSHIT"), "hostile: case insensitive BULLSHIT");
+assert(containsHostileTerm("you are a StUpId person"), "hostile: case insensitive StUpId");
+assert(containsHostileTerm("FUCKING garbage"), "hostile: case insensitive FUCKING");
+
+// 7. Normal comments do not trigger hostility
+assert(!containsHostileTerm("This is a normal comment"), "hostile: normal comment not flagged");
+assert(!containsHostileTerm("Hello, how are you today?"), "hostile: greeting not flagged");
+
+// 8. Stale detection uses recent comment timestamps
+const oldComments = [
+  makeComment("user1", "old", 100, 1),
+  makeComment("user2", "also old", 90, 1),
+];
+const oldSignals = extractCommentSignals(oldComments, "author", now);
+assert(oldSignals.stale === true, "stale: 100-hour-old comments are stale");
+
+const freshComments = [
+  makeComment("user1", "recent", 24, 1),
+  makeComment("user2", "also recent", 23, 1),
+];
+const freshSignals = extractCommentSignals(freshComments, "author", now);
+assert(freshSignals.stale === false, "stale: 24-hour-old comments are not stale");
+
 console.log(`\n=== Results: ${passed} passed, ${failed} failed ===`);
 process.exit(failed > 0 ? 1 : 0);
