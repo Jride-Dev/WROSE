@@ -12,29 +12,28 @@ export interface ResultFormOptions {
   sections: Section[];
 }
 
-export function showResultForm(context: Context, opts: ResultFormOptions): void {
-  const fields = opts.sections.map((s) => ({
-    name: s.label.toLowerCase().replace(/\s+/g, "_"),
-    label: s.label,
-    type: "paragraph" as const,
-    defaultValue: s.content,
-    disabled: true,
-    ...(s.lineHeight ? { lineHeight: s.lineHeight } : {}),
-  }));
+const resultFormKey = Devvit.createForm(
+  (data: any) => {
+    const fields = (data.sections || []).map((s: any) => ({
+      name: s.label.toLowerCase().replace(/\s+/g, "_"),
+      label: s.label,
+      type: "paragraph" as const,
+      defaultValue: s.content,
+      disabled: true,
+      ...(s.lineHeight ? { lineHeight: s.lineHeight } : {}),
+    }));
+    return {
+      fields,
+      title: data.title,
+      ...(data.description !== undefined ? { description: data.description } : {}),
+      acceptLabel: "Done",
+    };
+  },
+  () => {},
+);
 
-  const formOpts: {
-    fields: typeof fields;
-    title: string;
-    description?: string;
-    acceptLabel: string;
-  } = {
-    fields,
-    title: opts.title,
-    acceptLabel: "Done",
-  };
-  if (opts.description !== undefined) formOpts.description = opts.description;
-  const form = Devvit.createForm(formOpts, () => {});
-  context.ui.showForm(form);
+export function showResultForm(context: Context, opts: ResultFormOptions): void {
+  context.ui.showForm(resultFormKey, opts as any);
 }
 
 export function showErrorForm(context: Context, title: string, message: string): void {
