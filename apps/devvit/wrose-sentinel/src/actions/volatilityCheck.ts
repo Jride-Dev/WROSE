@@ -7,6 +7,7 @@ import { normalizeThingId } from "../utils/id.js";
 import {
   extractThreadContext,
   computeVolatilityScore,
+  suggestModeratorView,
   extractCommentSignals,
   suggestCommentAwareModView,
 } from "../utils/native.js";
@@ -14,6 +15,13 @@ import type { NativeCommentInput } from "../utils/native.js";
 
 const SAFETY = "WROSE Sentinel is analytical only. No Reddit content was modified.";
 const CTX = (s: string, p: string) => `r/${s} · ${normalizeThingId(p)}`;
+
+function buildSuggestedViewContent(baseline: string, commentAware: string): string {
+  const primary = `Suggested moderator view: ${commentAware}`;
+  const meta = `Baseline metadata view: ${baseline}`;
+  if (baseline === commentAware) return `${primary}\n${meta}`;
+  return `${primary}\n${meta}\nComment-aware override: ${commentAware}`;
+}
 
 async function tryNativeVolatility(
   context: Devvit.Context,
@@ -44,6 +52,7 @@ async function tryNativeVolatility(
     }));
 
     const signals = extractCommentSignals(mapped, ctx.postAuthor, new Date());
+    const baselineView = suggestModeratorView(ctx.commentCount, ctx.postScore, ctx.upvoteRatio, ctx.postAgeHours);
     const modView = suggestCommentAwareModView(signals);
 
     const allFactors = [...factors];
@@ -70,7 +79,7 @@ async function tryNativeVolatility(
         { label: "Result", content: `Factors: ${allFactors.join(" · ") || "None significant"}`, lineHeight: 2 },
         { label: "Detail", content: explanation, lineHeight: 3 },
         { label: "Comment Signals", content: signalsContent, lineHeight: 6 },
-        { label: "Suggested View", content: modView, lineHeight: 2 },
+        { label: "Suggested View", content: buildSuggestedViewContent(baselineView, modView), lineHeight: 3 },
         { label: "Safety", content: SAFETY, lineHeight: 2 },
       ],
     });

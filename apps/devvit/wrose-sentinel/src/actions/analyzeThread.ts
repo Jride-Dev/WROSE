@@ -16,6 +16,13 @@ import type { NativeCommentInput } from "../utils/native.js";
 const SAFETY = "WROSE Sentinel is analytical only. No Reddit content was modified.";
 const CTX = (s: string, p: string) => `r/${s} · ${normalizeThingId(p)}`;
 
+function buildSuggestedViewContent(baseline: string, commentAware: string): string {
+  const primary = `Suggested moderator view: ${commentAware}`;
+  const meta = `Baseline metadata view: ${baseline}`;
+  if (baseline === commentAware) return `${primary}\n${meta}`;
+  return `${primary}\n${meta}\nComment-aware override: ${commentAware}`;
+}
+
 async function tryNativeAnalysis(
   context: Devvit.Context,
   subreddit: string,
@@ -59,7 +66,7 @@ async function tryNativeAnalysis(
         { label: "Post", content: CTX(subreddit, postId) + "\n" + ctx.postTitle, lineHeight: 2 },
         { label: "Thread Context", content: summary, lineHeight: 6 },
         { label: "Comment Signals", content: signalsContent, lineHeight: 6 },
-        { label: "Suggested View", content: `${view}\n\nComment-aware: ${commentAwareView}`, lineHeight: 3 },
+        { label: "Suggested View", content: buildSuggestedViewContent(view, commentAwareView), lineHeight: 3 },
         { label: "Safety", content: SAFETY, lineHeight: 2 },
       ],
     });
