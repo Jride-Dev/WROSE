@@ -1,0 +1,83 @@
+import { Devvit } from "@devvit/public-api";
+import { showResultForm, showErrorForm } from "../utils/forms.js";
+import {
+  extractThreadContext,
+  extractCommentSignals,
+  suggestCommentAwareModView,
+  buildHeatmap,
+} from "../utils/native.js";
+import type { NativeCommentInput, HeatmapBucket } from "../utils/native.js";
+
+const SAFETY = "WROSE Sentinel is analytical only. No Reddit content was modified.";
+
+function formatHeatmapContent(buckets: HeatmapBucket[], hotZone: string, modView: string): string {
+  const lines = buckets.map((b) => {
+    const label = b.label.padEnd(10);
+    return `${label}[${b.bar}] ${b.commentCount} comments · ${b.hostileCommentCount} hostile · ${b.symbolBurstCount} bursts`;
+  });
+  return [
+    ...lines,
+    "",
+    `Hot zone: ${hotZone}`,
+    `Suggested moderator view: ${modView}`,
+  ].join("\n");
+}
+
+async function tryNativeHeatmap(
+  context: Devvit.Context,
+  postId: string,
+): Promise<boolean> {
+  try {
+    const post = await context.reddit.getPostById(postId);
+    const ctx = extractThreadContext(post);
+
+    const rawComments = await context.reddit.getComments({
+      postId,
+      limit: 100,
+      pageSize: 100,
+    }).all();
+
+    const mapped: NativeCommentInput[] = rawComments.map((c) => ({
+      authorName: c.authorName,
+      body: c.body,
+      createdAt: c.createdAt,
+      score: c.score,
+    }));
+
+    const signals = extractCommentSignals(mapped, ctx.postAuthor, new Date());
+    const modView = suggestCommentAwareModView(signals);
+    const heatmap = buildHeatmap(mapped, ctx.postAuthor, new Date());
+    const content = formatHeatmapContent(heatmap.buckets, heatmap.hotZone, modView);
+
+    showResultForm(context, {
+      title: "WROSE: Thread Heatmap",
+      description: "Status: native_analysis | Backend: native_devvit",
+      sections: [
+        { label: "Heatmap", content, lineHeight: 10 },
+        { label: "Safety", content: SAFETY, lineHeight: 2 },
+      ],
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function handleThreadHeatmap(
+  context: Devvit.Context,
+): Promise<void> {
+  const subreddit = context.subredditName || "";
+  const postId = context.postId || "";
+
+  if (!subreddit || !postId) {
+    showErrorForm(context, "WROSE: Thread Heatmap",
+      "Could not determine the subreddit or post. Open this menu from a specific post.");
+    return;
+  }
+
+  const nativeOk = await tryNativeHeatmap(context, postId);
+  if (!nativeOk) {
+    showErrorForm(context, "WROSE: Thread Heatmap",
+      "Could not analyze thread heatmap. Please try again.");
+  }
+}

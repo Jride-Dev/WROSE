@@ -280,3 +280,87 @@ export function suggestCommentAwareModView(signals: CommentSignalsResult): strin
   if (stale) return "Routine — stale thread with no meaningful recent activity";
   return "Routine — no significant signals detected";
 }
+
+export interface HeatmapBucket {
+  label: string;
+  commentCount: number;
+  uniqueParticipants: number;
+  hostileCommentCount: number;
+  symbolBurstCount: number;
+  intensity: number;
+  bar: string;
+}
+
+export interface HeatmapResult {
+  buckets: HeatmapBucket[];
+  totalComments: number;
+  hotZone: string;
+}
+
+function renderBar(intensity: number, width: number = 10): string {
+  const filled = Math.max(0, Math.min(width, Math.round(intensity * width)));
+  return "\u2588".repeat(filled) + "-".repeat(width - filled);
+}
+
+export function buildHeatmap(
+  comments: NativeCommentInput[],
+  _postAuthorName: string,
+  now: Date,
+): HeatmapResult {
+  const bucketDefs = [
+    { label: "0-15m", minMinutes: -Infinity, maxMinutes: 15 },
+    { label: "15-60m", minMinutes: 15, maxMinutes: 60 },
+    { label: "1-6h", minMinutes: 60, maxMinutes: 6 * 60 },
+    { label: "6-24h", minMinutes: 6 * 60, maxMinutes: 24 * 60 },
+    { label: "24h+", minMinutes: 24 * 60, maxMinutes: Infinity },
+  ];
+
+  const buckets: HeatmapBucket[] = bucketDefs.map((d) => ({
+    label: d.label,
+    commentCount: 0,
+    uniqueParticipants: 0,
+    hostileCommentCount: 0,
+    symbolBurstCount: 0,
+    intensity: 0,
+    bar: "",
+  }));
+
+  const bucketParticipants: Map<string, Set<string>> = new Map();
+  for (const b of buckets) bucketParticipants.set(b.label, new Set());
+
+  for (const c of comments) {
+    const createdAt = c.createdAt instanceof Date ? c.createdAt : new Date(c.createdAt ?? now);
+    const ageMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+    const author = c.authorName ?? "";
+    const body = c.body ?? "";
+
+    let idx = bucketDefs.length - 1;
+    for (let i = 0; i < bucketDefs.length; i++) {
+      if (ageMinutes <= bucketDefs[i].maxMinutes) { idx = i; break; }
+    }
+
+    buckets[idx].commentCount++;
+    bucketParticipants.get(buckets[idx].label)!.add(author);
+
+    if (containsHostileTerm(body)) buckets[idx].hostileCommentCount++;
+    if (hasSymbolBurst(body)) buckets[idx].symbolBurstCount++;
+  }
+
+  const totalComments = comments.length;
+  for (const b of buckets) {
+    b.uniqueParticipants = bucketParticipants.get(b.label)!.size;
+    b.intensity = totalComments > 0 ? b.commentCount / totalComments : 0;
+    b.bar = renderBar(b.intensity);
+  }
+
+  let hotZone = buckets[0].label;
+  let maxCount = buckets[0].commentCount;
+  for (let i = 1; i < buckets.length; i++) {
+    if (buckets[i].commentCount > maxCount) {
+      maxCount = buckets[i].commentCount;
+      hotZone = buckets[i].label;
+    }
+  }
+
+  return { buckets, totalComments, hotZone };
+}
