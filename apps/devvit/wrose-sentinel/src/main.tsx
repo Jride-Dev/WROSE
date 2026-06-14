@@ -1,6 +1,7 @@
 import { Devvit, SettingScope } from "@devvit/public-api";
 import { handleAnalyzeThread } from "./actions/analyzeThread.js";
 import { handleVolatilityCheck } from "./actions/volatilityCheck.js";
+import { handleThreadHeatmap } from "./actions/threadHeatmap.js";
 import { showCapabilities } from "./actions/capabilities.js";
 import { showErrorForm } from "./utils/forms.js";
 
@@ -40,6 +41,16 @@ Devvit.addMenuItem({
   description: "Check thread volatility score and contributing factors. Analytical only — no moderation action taken.",
   onPress: async (_event, context) => {
     await handleVolatilityCheck(context);
+  },
+});
+
+Devvit.addMenuItem({
+  label: "WROSE: Thread Heatmap",
+  location: "post",
+  forUserType: "moderator",
+  description: "View comment concentration heatmap across time windows. Analytical only — no moderation action taken.",
+  onPress: async (_event, context) => {
+    await handleThreadHeatmap(context);
   },
 });
 

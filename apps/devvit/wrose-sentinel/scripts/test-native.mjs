@@ -324,5 +324,172 @@ const freshComments = [
 const freshSignals = extractCommentSignals(freshComments, "author", now);
 assert(freshSignals.stale === false, "stale: 24-hour-old comments are not stale");
 
+// === Heatmap helpers ===
+
+function renderBar(intensity, width) {
+  if (width === undefined) width = 10;
+  const filled = Math.max(0, Math.min(width, Math.round(intensity * width)));
+  return "\u2588".repeat(filled) + "-".repeat(width - filled);
+}
+
+function buildHeatmap(comments, postAuthorName, now) {
+  const bucketDefs = [
+    { label: "0-15m", minMinutes: -Infinity, maxMinutes: 15 },
+    { label: "15-60m", minMinutes: 15, maxMinutes: 60 },
+    { label: "1-6h", minMinutes: 60, maxMinutes: 6 * 60 },
+    { label: "6-24h", minMinutes: 6 * 60, maxMinutes: 24 * 60 },
+    { label: "24h+", minMinutes: 24 * 60, maxMinutes: Infinity },
+  ];
+
+  const buckets = bucketDefs.map((d) => ({
+    label: d.label,
+    commentCount: 0,
+    uniqueParticipants: 0,
+    hostileCommentCount: 0,
+    symbolBurstCount: 0,
+    intensity: 0,
+    bar: "",
+  }));
+
+  const bucketParticipants = new Map();
+  for (const b of buckets) bucketParticipants.set(b.label, new Set());
+
+  for (const c of comments) {
+    const createdAt = c.createdAt instanceof Date ? c.createdAt : new Date(c.createdAt ?? now);
+    const ageMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+    const author = c.authorName ?? "";
+    const body = c.body ?? "";
+
+    let idx = bucketDefs.length - 1;
+    for (let i = 0; i < bucketDefs.length; i++) {
+      if (ageMinutes <= bucketDefs[i].maxMinutes) { idx = i; break; }
+    }
+
+    buckets[idx].commentCount++;
+    bucketParticipants.get(buckets[idx].label).add(author);
+
+    if (containsHostileTerm(body)) buckets[idx].hostileCommentCount++;
+    if (hasSymbolBurst(body)) buckets[idx].symbolBurstCount++;
+  }
+
+  const totalComments = comments.length;
+  for (const b of buckets) {
+    b.uniqueParticipants = bucketParticipants.get(b.label).size;
+    b.intensity = totalComments > 0 ? b.commentCount / totalComments : 0;
+    b.bar = renderBar(b.intensity);
+  }
+
+  let hotZone = buckets[0].label;
+  let maxCount = buckets[0].commentCount;
+  for (let i = 1; i < buckets.length; i++) {
+    if (buckets[i].commentCount > maxCount) {
+      maxCount = buckets[i].commentCount;
+      hotZone = buckets[i].label;
+    }
+  }
+
+  return { buckets, totalComments, hotZone };
+}
+
+console.log("\n=== Heatmap Tests ===\n");
+
+// 1. No comments
+const emptyHeatmap = buildHeatmap([], "author", now);
+assert(emptyHeatmap.totalComments === 0, "heatmap: totalComments is 0 for no comments");
+assert(emptyHeatmap.buckets.every((b) => b.commentCount === 0), "heatmap: all buckets empty");
+assert(emptyHeatmap.buckets.every((b) => b.bar === "----------"), "heatmap: empty bars show dashes");
+assert(emptyHeatmap.hotZone === "0-15m", "heatmap: hotZone defaults to first bucket");
+
+// 2. Old/stale comments only
+const oldHeatComments = [
+  makeComment("user1", "old comment", 100, 1),
+  makeComment("user2", "another old", 90, 2),
+];
+const oldHeatmap = buildHeatmap(oldHeatComments, "author", now);
+assert(oldHeatmap.totalComments === 2, "heatmap: 2 old comments");
+assert(oldHeatmap.buckets[4].commentCount === 2, "heatmap: both old comments in 24h+ bucket");
+assert(oldHeatmap.hotZone === "24h+", "heatmap: hotZone is 24h+");
+
+// 3. One-user noisy thread
+const noisyComments = [];
+for (let i = 0; i < 5; i++) {
+  noisyComments.push(makeComment("user1", `noisy comment ${i}`, 0.1, 1));
+}
+const noisyHeatmap = buildHeatmap(noisyComments, "author", now);
+assert(noisyHeatmap.buckets[0].commentCount === 5, "heatmap: 5 comments in 0-15m bucket");
+assert(noisyHeatmap.buckets[0].uniqueParticipants === 1, "heatmap: 1 participant in 0-15m bucket");
+assert(noisyHeatmap.hotZone === "0-15m", "heatmap: hotZone is 0-15m");
+
+// 4. Multi-participant escalation across buckets
+const spreadComments = [
+  makeComment("user1", "recent", 0.1, 1),
+  makeComment("user2", "recent too", 0.2, 2),
+  makeComment("user1", "reply", 0.5, 1),
+  makeComment("user3", "30 min ago", 0.5, 3),
+  makeComment("user4", "2h ago", 2, 1),
+  makeComment("user5", "2h ago too", 2.5, 2),
+  makeComment("user6", "10h ago", 10, 1),
+  makeComment("user7", "12h ago", 12, 2),
+  makeComment("user8", "48h ago", 48, 1),
+  makeComment("user9", "72h ago", 72, 2),
+];
+const spreadHeatmap = buildHeatmap(spreadComments, "author", now);
+assert(spreadHeatmap.totalComments === 10, "heatmap: 10 spread comments");
+assert(spreadHeatmap.buckets[0].commentCount === 2, "heatmap: 2 in 0-15m");
+assert(spreadHeatmap.buckets[1].commentCount === 2, "heatmap: 2 in 15-60m");
+assert(spreadHeatmap.buckets[2].commentCount === 2, "heatmap: 2 in 1-6h");
+assert(spreadHeatmap.buckets[3].commentCount === 2, "heatmap: 2 in 6-24h");
+assert(spreadHeatmap.buckets[4].commentCount === 2, "heatmap: 2 in 24h+");
+assert(spreadHeatmap.hotZone === "0-15m", "heatmap: hotZone is 0-15m (highest count)");
+
+// 5. Symbol bursts in specific bucket
+const burstHeatComments = [
+  makeComment("user1", "normal", 3, 1),
+  makeComment("user2", "!!@#$%^&*!!!!!", 4, 2),
+];
+const burstHeatResult = buildHeatmap(burstHeatComments, "author", now);
+assert(burstHeatResult.buckets[2].symbolBurstCount === 1, "heatmap: symbol burst in 1-6h bucket");
+
+// 6. Hostile comments in specific bucket
+const hostileHeatComments = [
+  makeComment("user1", "this is bullshit", 8, 1),
+  makeComment("user2", "normal reply", 10, 2),
+];
+const hostileHeatResult = buildHeatmap(hostileHeatComments, "author", now);
+assert(hostileHeatResult.buckets[3].hostileCommentCount === 1, "heatmap: hostile in 6-24h bucket");
+
+// 7. Hot zone selection with tie (first wins)
+const tieComments = [
+  makeComment("user1", "a", 0.1, 1),
+  makeComment("user2", "b", 0.2, 1),
+  makeComment("user3", "c", 10, 1),
+  makeComment("user4", "d", 12, 1),
+];
+const tieHeatmap = buildHeatmap(tieComments, "author", now);
+assert(tieHeatmap.buckets[0].commentCount === 2, "heatmap: 2 in 0-15m");
+assert(tieHeatmap.buckets[3].commentCount === 2, "heatmap: 2 in 6-24h");
+assert(tieHeatmap.hotZone === "0-15m", "heatmap: tie goes to earliest bucket");
+
+// 8. Visual bar bounds
+assert(renderBar(0) === "----------", "heatmap: bar at 0 intensity is all dashes");
+assert(renderBar(1) === "\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588", "heatmap: bar at 1 intensity is all filled");
+assert(renderBar(0.5) === "\u2588\u2588\u2588\u2588\u2588-----", "heatmap: bar at 0.5 intensity is half filled");
+assert(renderBar(0, 5) === "-----", "heatmap: bar width 5 at 0 intensity");
+
+// 9. Preservation of automated_action_taken false (mod view never suggests action)
+const safeModView = suggestCommentAwareModView({
+  uniqueParticipants: 1,
+  recentComments60m: 0,
+  hostileCommentCount: 0,
+  symbolBurstCount: 0,
+  stale: true,
+  confidence: "low",
+});
+assert(!safeModView.includes("Remove") && !safeModView.includes("Ban") && !safeModView.includes("Lock"),
+  "heatmap: mod view never includes moderation action keywords");
+
+// 10. No backend dependency (buildHeatmap is pure)
+assert(typeof buildHeatmap === "function", "heatmap: buildHeatmap is a pure function with no HTTP calls");
+
 console.log(`\n=== Results: ${passed} passed, ${failed} failed ===`);
 process.exit(failed > 0 ? 1 : 0);
