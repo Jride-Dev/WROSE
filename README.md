@@ -63,7 +63,7 @@ WROSE Sentinel is a Reddit-native moderator intelligence assistant (Devvit app) 
 - **External Backend (Optional)**: FastAPI signal lab (`apps/api`) preserved. Integration code behind optional flag. Requires Reddit-approved HTTP fetch domain (both `wrose-api.jri-techyes.top` and ngrok domain were rejected).
 - **Safety invariant**: `automated_action_taken: false` enforced in every path.
 - **Phase 2I complete**: See `docs/PHASE_2I_NATIVE_DEVVIT_ADAPTER.md`.
-
+[![Launched on DevGlobe](https://devglobe.app/badges/launched-on-devglobe-dark.svg)](https://devglobe.app/projects/wrose?utm_source=badge&utm_medium=embed)
 ### Devvit Playtest Rules
 
 - Playtest only in `r/wrose_sentinel_dev`

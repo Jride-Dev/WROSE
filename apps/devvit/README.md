@@ -2,6 +2,8 @@
 
 **Status**: Phase 2 — MVP scaffold with two moderator-only analytical actions.
 
+[![Launched on DevGlobe](https://devglobe.app/badges/launched-on-devglobe-dark.svg)](https://devglobe.app/projects/wrose?utm_source=badge&utm_medium=embed)
+
 ## Overview
 
 WROSE Sentinel is a Reddit-native moderator intelligence assistant. It exposes analytical menu actions that call the WROSE backend API. All actions are read-only and analytical — no automated moderation.

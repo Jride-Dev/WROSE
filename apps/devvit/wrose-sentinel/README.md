@@ -12,6 +12,7 @@ WROSE Sentinel runs directly inside Reddit using Devvit native analysis. It does
 * **Backend required:** No
 * **Primary purpose:** Moderator-assist analytics
 * **Automated moderation:** None
+[![Launched on DevGlobe](https://devglobe.app/badges/launched-on-devglobe-dark.svg)](https://devglobe.app/projects/wrose?utm_source=badge&utm_medium=embed)
 
 WROSE Sentinel is analytical only. It does not remove, lock, report, approve, distinguish, ban, mute, message, or otherwise modify Reddit content.
 
