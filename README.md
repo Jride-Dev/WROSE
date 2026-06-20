@@ -98,7 +98,7 @@ docs/
 .gitignore
 README.md
 ```
-
+[![Launched on DevGlobe](https://devglobe.app/badges/launched-on-devglobe-dark.svg)](https://devglobe.app/projects/wrose?utm_source=badge&utm_medium=embed)
 ## Safety Boundary
 
 WROSE Sentinel does **not** remove, lock, ban, mute, report, approve, distinguish, or modify Reddit content. Every analysis response preserves `automated_action_taken: false`.
