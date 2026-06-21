@@ -7,12 +7,11 @@ WROSE Sentinel runs directly inside Reddit using Devvit native analysis. It does
 ## Current Status
 
 * **Public status:** Listed in the Reddit App Directory
-* **Approved version:** v0.0.34
+* **Approved version:** v0.0.37
 * **Runtime mode:** Native Devvit analysis
 * **Backend required:** No
 * **Primary purpose:** Moderator-assist analytics
 * **Automated moderation:** None
-[![Launched on DevGlobe](https://devglobe.app/badges/launched-on-devglobe-dark.svg)](https://devglobe.app/projects/wrose?utm_source=badge&utm_medium=embed)
 
 WROSE Sentinel is analytical only. It does not remove, lock, report, approve, distinguish, ban, mute, message, or otherwise modify Reddit content.
 
@@ -39,6 +38,8 @@ The goal is not to replace moderator judgment. The goal is to make thread review
 | **WROSE: Analyze Thread**       | Post menu      | Reviews thread activity, comment signals, participant activity, hostility indicators, symbol bursts, and suggested moderator view |
 | **WROSE: Volatility Check**     | Post menu      | Calculates a volatility score and shows contributing factors                                                                      |
 | **WROSE: About / Capabilities** | Subreddit menu | Shows what the app can do and confirms native analysis status                                                                     |
+
+WROSE: Thread Heatmap | Post menu | Shows where thread activity, hostility, symbol bursts, and escalation signals are concentrated over time
 
 All actions are available to moderators only.
 
