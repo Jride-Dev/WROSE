@@ -10,17 +10,49 @@ import type { NativeCommentInput, HeatmapBucket } from "../utils/native.js";
 
 const SAFETY = "WROSE Sentinel is analytical only. No Reddit content was modified.";
 
-function formatHeatmapContent(buckets: HeatmapBucket[], hotZone: string, modView: string): string {
+function formatHeatmapContent(
+  buckets: HeatmapBucket[],
+  hotZone: string,
+  modView: string,
+  totalComments: number,
+  stale: boolean,
+): string {
+  if (totalComments === 0) {
+    return [
+      "No comment activity detected.",
+      "Metadata-only signals remain low.",
+      "",
+      "Suggested moderator view: Routine.",
+    ].join("\n");
+  }
+
   const lines = buckets.map((b) => {
     const label = b.label.padEnd(10);
     return `${label}[${b.bar}] ${b.commentCount} comments · ${b.hostileCommentCount} hostile · ${b.symbolBurstCount} bursts`;
   });
-  return [
+
+  const hotBucket = buckets.find((b) => b.label === hotZone);
+  const whyParts: string[] = [];
+  if (hotBucket) {
+    whyParts.push(`${hotBucket.commentCount} comments`);
+    if (hotBucket.uniqueParticipants > 0) whyParts.push(`${hotBucket.uniqueParticipants} participants`);
+    if (hotBucket.hostileCommentCount > 0) whyParts.push(`${hotBucket.hostileCommentCount} hostile`);
+    if (hotBucket.symbolBurstCount > 0) whyParts.push(`${hotBucket.symbolBurstCount} symbol bursts`);
+  }
+
+  const parts = [
     ...lines,
     "",
-    `Hot zone: ${hotZone}`,
+    `Hot zone: ${hotZone} — highest concentration of activity`,
+    whyParts.length > 0 ? `Why: ${whyParts.join(" · ")}` : "",
     `Suggested moderator view: ${modView}`,
-  ].join("\n");
+  ];
+
+  if (stale) {
+    parts.push("Thread is stale — recent activity is low. Review urgency reduced.");
+  }
+
+  return parts.join("\n");
 }
 
 async function tryNativeHeatmap(
@@ -47,7 +79,7 @@ async function tryNativeHeatmap(
     const signals = extractCommentSignals(mapped, ctx.postAuthor, new Date());
     const modView = suggestCommentAwareModView(signals);
     const heatmap = buildHeatmap(mapped, ctx.postAuthor, new Date());
-    const content = formatHeatmapContent(heatmap.buckets, heatmap.hotZone, modView);
+    const content = formatHeatmapContent(heatmap.buckets, heatmap.hotZone, modView, heatmap.totalComments, signals.stale);
 
     showResultForm(context, {
       title: "WROSE: Thread Heatmap",

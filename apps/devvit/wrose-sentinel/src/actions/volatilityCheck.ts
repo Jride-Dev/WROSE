@@ -62,6 +62,13 @@ async function tryNativeVolatility(
     if (signals.stale) allFactors.push("Stale thread");
     if (signals.confidence === "low") allFactors.push("Low confidence (small sample)");
 
+    const lowActivityNotes: string[] = [];
+    if (signals.uniqueParticipants === 0) {
+      lowActivityNotes.push("No comment activity detected. Metadata-only signals remain low.");
+    } else if (signals.stale) {
+      lowActivityNotes.push("Thread is stale — recent activity is low. Review urgency reduced.");
+    }
+
     const signalsContent = [
       `Participants: ${signals.uniqueParticipants}`,
       `Recent: ${signals.recentComments15m} / 15m · ${signals.recentComments60m} / 60m`,
@@ -69,6 +76,7 @@ async function tryNativeVolatility(
       `Symbol bursts: ${signals.symbolBurstCount}`,
       `Confidence: ${signals.confidence}`,
       `Stale: ${signals.stale}`,
+      ...(lowActivityNotes.length > 0 ? ["", ...lowActivityNotes] : []),
     ].join("\n");
 
     showResultForm(context, {

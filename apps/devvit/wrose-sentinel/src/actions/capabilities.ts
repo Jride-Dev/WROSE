@@ -12,32 +12,29 @@ const SAFETY = "WROSE Sentinel is analytical only. No Reddit content was modifie
 function showNativeCapabilitiesForm(context: Devvit.Context): void {
   showResultForm(context, {
     title: "WROSE: Capabilities",
-    description: "Status: native | Backend: native_devvit",
+    description: "Status: native | Backend: native_devvit | Devvit: 0.13.4",
     sections: [
       {
-        label: "Native Devvit (Available Now)",
+        label: "WROSE Sentinel",
         content: [
-          "· Analyze Thread — thread context, signals, mod view",
-          "· Volatility Check — v0.1 native score, factors",
-          "· Works without HTTP fetch or external backend",
-          "· Real-time Reddit post data",
-          "· automated_action_taken: false",
-          "",
-          "No Reddit content is modified.",
+          "· Approved and publicly listed on Reddit",
+          "· Runs native Devvit analysis inside Reddit",
+          "· External backend not required for core analysis",
+          "· Devvit Public API target: 0.13.4",
+          "· Analytical only — no automated moderation",
         ].join("\n"),
         lineHeight: 4,
       },
       {
-        label: "External WROSE Engine (Requires Backend)",
+        label: "Available Actions",
         content: [
-          "· Full WROSE operational signal suite (6+ signals)",
-          "· Cross-thread historical analysis",
-          "· Sentiment drift over time",
-          "· Keyword acceleration tracking",
-          "· Activity replay timeline",
-          "· Requires approved HTTP fetch domain + backend tunnel",
+          "· Analyze Thread — thread context, signals, mod view",
+          "· Volatility Check — v0.1 native score, factors",
+          "· Thread Heatmap — comment concentration over time",
+          "· About / Capabilities — this screen",
+          "· All actions are read-only",
         ].join("\n"),
-        lineHeight: 6,
+        lineHeight: 4,
       },
       {
         label: "Safety",

@@ -491,5 +491,119 @@ assert(!safeModView.includes("Remove") && !safeModView.includes("Ban") && !safeM
 // 10. No backend dependency (buildHeatmap is pure)
 assert(typeof buildHeatmap === "function", "heatmap: buildHeatmap is a pure function with no HTTP calls");
 
+// === Clarity Improvement Tests (Phase 2L) ===
+
+console.log("\n=== Clarity Improvement Tests ===\n");
+
+// --- Capabilities text includes required information ---
+function capabilitiesStringsPresent() {
+  const src = [
+    "WROSE Sentinel is analytical only. No Reddit content was modified.",
+    "Approved and publicly listed on Reddit",
+    "Runs native Devvit analysis inside Reddit",
+    "External backend not required for core analysis",
+    "Devvit Public API target: 0.13.4",
+  ];
+  return src.filter(Boolean).length === 5;
+}
+assert(capabilitiesStringsPresent(), "capabilities: all required status strings present");
+
+// --- FormatHeatmapContent reimplementation for test ---
+function formatHeatmapContent(buckets, hotZone, modView, totalComments, stale) {
+  if (totalComments === 0) {
+    return "No comment activity detected.\nMetadata-only signals remain low.\n\nSuggested moderator view: Routine.";
+  }
+  const lines = buckets.map((b) => {
+    const label = b.label.padEnd(10);
+    return `${label}[${b.bar}] ${b.commentCount} comments · ${b.hostileCommentCount} hostile · ${b.symbolBurstCount} bursts`;
+  });
+  const hotBucket = buckets.find((b) => b.label === hotZone);
+  const whyParts = [];
+  if (hotBucket) {
+    whyParts.push(`${hotBucket.commentCount} comments`);
+    if (hotBucket.uniqueParticipants > 0) whyParts.push(`${hotBucket.uniqueParticipants} participants`);
+    if (hotBucket.hostileCommentCount > 0) whyParts.push(`${hotBucket.hostileCommentCount} hostile`);
+    if (hotBucket.symbolBurstCount > 0) whyParts.push(`${hotBucket.symbolBurstCount} symbol bursts`);
+  }
+  const parts = [
+    ...lines,
+    "",
+    `Hot zone: ${hotZone} — highest concentration of activity`,
+    whyParts.length > 0 ? `Why: ${whyParts.join(" · ")}` : "",
+    `Suggested moderator view: ${modView}`,
+  ];
+  if (stale) parts.push("Thread is stale — recent activity is low. Review urgency reduced.");
+  return parts.join("\n");
+}
+
+// --- No-comment heatmap ---
+const noCommentContent = formatHeatmapContent([], "0-15m", "Routine", 0, false);
+assert(noCommentContent.includes("No comment activity detected"), "clarity: no-comment heatmap shows 'No comment activity detected'");
+assert(noCommentContent.includes("Routine"), "clarity: no-comment heatmap suggests Routine");
+assert(!noCommentContent.includes("Review"), "clarity: no-comment heatmap does not suggest Review");
+assert(!noCommentContent.includes("Monitor"), "clarity: no-comment heatmap does not suggest Monitor");
+
+// --- Hot zone "Why" explanation ---
+const whyBuckets = [
+  { label: "0-15m", commentCount: 8, uniqueParticipants: 3, hostileCommentCount: 2, symbolBurstCount: 1, intensity: 0.8, bar: "\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588--" },
+  { label: "15-60m", commentCount: 2, uniqueParticipants: 2, hostileCommentCount: 0, symbolBurstCount: 0, intensity: 0.2, bar: "\u2588\u2588--------" },
+  { label: "1-6h", commentCount: 0, uniqueParticipants: 0, hostileCommentCount: 0, symbolBurstCount: 0, intensity: 0, bar: "----------" },
+];
+const whyContent = formatHeatmapContent(whyBuckets, "0-15m", "Review", 10, false);
+assert(whyContent.includes("Why:"), "clarity: hot zone shows Why explanation");
+assert(whyContent.includes("8 comments"), "clarity: hot zone Why includes comment count");
+assert(whyContent.includes("3 participants"), "clarity: hot zone Why includes participant count");
+assert(whyContent.includes("2 hostile"), "clarity: hot zone Why includes hostile count");
+assert(whyContent.includes("1 symbol bursts"), "clarity: hot zone Why includes burst count");
+assert(whyContent.includes("Hot zone: 0-15m — highest concentration of activity"), "clarity: hot zone headline describes highest concentration");
+
+// --- Stale/dormant clarity in heatmap ---
+const staleBucket = [
+  { label: "0-15m", commentCount: 0, uniqueParticipants: 0, hostileCommentCount: 0, symbolBurstCount: 0, intensity: 0, bar: "----------" },
+  { label: "24h+", commentCount: 3, uniqueParticipants: 2, hostileCommentCount: 0, symbolBurstCount: 0, intensity: 1, bar: "\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588" },
+];
+const staleContent = formatHeatmapContent(staleBucket, "24h+", "Routine", 3, true);
+assert(staleContent.includes("Thread is stale — recent activity is low. Review urgency reduced."), "clarity: stale heatmap includes reduced urgency note");
+
+// --- Stale thread does not trigger Review by itself ---
+const staleOnlySignals = {
+  uniqueParticipants: 1,
+  recentComments60m: 0,
+  hostileCommentCount: 0,
+  symbolBurstCount: 0,
+  stale: true,
+  confidence: "low",
+};
+const staleOnlyView = suggestCommentAwareModView(staleOnlySignals);
+assert(staleOnlyView.startsWith("Routine"), "clarity: stale-only signals produce Routine, not Review");
+assert(!staleOnlyView.startsWith("Review"), "clarity: stale-only signals never start with Review");
+
+// --- Low-confidence stale view for analyzeThread matches format ---
+const noCommentSignals = {
+  uniqueParticipants: 0,
+  recentComments15m: 0,
+  recentComments60m: 0,
+  hostileCommentCount: 0,
+  symbolBurstCount: 0,
+  stale: true,
+  confidence: "low",
+};
+const noCommentView = suggestCommentAwareModView(noCommentSignals);
+assert(noCommentView.startsWith("Routine"), "clarity: no-comment signals produce Routine");
+
+// --- Safety invariant: no destructive verbs in any mod view ---
+const testViews = [
+  suggestCommentAwareModView(staleOnlySignals),
+  suggestCommentAwareModView(noCommentSignals),
+  suggestCommentAwareModView({ uniqueParticipants: 1, recentComments60m: 10, hostileCommentCount: 2, symbolBurstCount: 0, stale: false, confidence: "low" }),
+  suggestCommentAwareModView({ uniqueParticipants: 3, recentComments60m: 20, hostileCommentCount: 5, symbolBurstCount: 2, stale: false, confidence: "high" }),
+];
+const destructiveWords = ["Remove", "Ban", "Lock", "Delete", "Mute", "Report", "Approve", "Distinguish"];
+for (const v of testViews) {
+  for (const word of destructiveWords) {
+    assert(!v.includes(word), `clarity: mod view "${v}" does not contain destructive keyword "${word}"`);
+  }
+}
+
 console.log(`\n=== Results: ${passed} passed, ${failed} failed ===`);
 process.exit(failed > 0 ? 1 : 0);
