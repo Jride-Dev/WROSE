@@ -121,3 +121,23 @@ The app is intended for moderator workflow support and does not require users to
 WROSE Sentinel is part of the broader WROSE project: **Working Reddit Operational Signal Engine**.
 
 The project focuses on moderator intelligence, thread analysis, volatility detection, and operational signal review for Reddit communities.
+
+## v0.0.38 Submission Notes
+
+This submission:
+
+* updates Devvit Public API target to 0.13.4
+* adds moderator-facing clarity polish
+* improves About / Capabilities wording
+* improves Thread Heatmap hot-zone explanation with a compact "Why" summary
+* improves no-comment and stale-thread explanations
+* keeps WROSE analytical only
+* does not modify Reddit content
+* does not perform automated moderation
+
+Validation:
+
+* `npm ls devvit @devvit/public-api` confirms 0.13.4
+* `npm run typecheck` passed
+* `npm run check:safety` passed
+* `node scripts/test-native.mjs` passed: 130/130
