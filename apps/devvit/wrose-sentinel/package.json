@@ -11,8 +11,8 @@
     "devvit:logs": "devvit logs"
   },
   "dependencies": {
-    "@devvit/public-api": "0.13.0",
-    "devvit": "0.13.0"
+    "@devvit/public-api": "0.13.4",
+    "devvit": "0.13.4"
   },
   "devDependencies": {
     "@devvit/tsconfig": "0.13.0",
