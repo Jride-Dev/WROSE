@@ -7,6 +7,9 @@
       "enable": true
     }
   },
+  "marketingAssets": {
+    "icon": "assets/icon.png"
+  },
   "dev": {
     "subreddit": "wrose_sentinel_dev"
   }
